@@ -12,9 +12,9 @@
 <style>
 :root{
   color-scheme: light;
-  --bg:#F4F7FD; --surface:#FFFFFF; --ink:#0B1530; --muted:#55607A; --line:#DFE6F3;
-  --royal:#1D4ED8; --royal-ink:#FFFFFF; --gold:#60A5FA; --gold-ink:#FFFFFF;
-  --chip:#E7EEFC; --warn:#9A5B00;
+  --bg:#FAF7F2; --surface:#FFFFFF; --ink:#24100F; --muted:#6E5D59; --line:#EBE1D6;
+  --royal:#7A1E2C; --royal-ink:#FFFFFF; --gold:#C9A227; --gold-ink:#FFFFFF;
+  --chip:#F3E9DC; --warn:#9A5B00;
   --display:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --body:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   box-sizing:border-box;
@@ -24,14 +24,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme: dark;
-    --bg:#070D1F; --surface:#0F1830; --ink:#EAF0FF; --muted:#9AA8C7; --line:#1E2A4A;
-    --royal:#4F8BFF; --royal-ink:#06102A; --gold:#7DB7FF; --chip:#16213F; --warn:#FFC86B;
+    --bg:#140809; --surface:#22100F; --ink:#FBF1E6; --muted:#BFA9A2; --line:#3A1F1D;
+    --royal:#E0B53E; --royal-ink:#2A0E0C; --gold:#E0B53E; --chip:#2E1716; --warn:#FFC86B;
   }
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
-  --bg:#070D1F; --surface:#0F1830; --ink:#EAF0FF; --muted:#9AA8C7; --line:#1E2A4A;
-  --royal:#4F8BFF; --royal-ink:#06102A; --gold:#7DB7FF; --chip:#16213F; --warn:#FFC86B;
+  --bg:#140809; --surface:#22100F; --ink:#FBF1E6; --muted:#BFA9A2; --line:#3A1F1D;
+  --royal:#E0B53E; --royal-ink:#2A0E0C; --gold:#E0B53E; --chip:#2E1716; --warn:#FFC86B;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
@@ -52,8 +52,8 @@ p{margin:0 0 14px}
 
 /* The pass: the one bold element */
 .pass{position:relative;color:#fff;border-radius:26px;padding:20px 24px 22px;overflow:hidden;margin:22px 0;
-  background:radial-gradient(circle at 88% 12%,rgba(147,197,253,.6),transparent 42%),linear-gradient(135deg,#0A2370 0%,#1D4ED8 55%,#3B82F6 100%);
-  box-shadow:0 24px 48px -22px rgba(29,78,216,.7)}
+  background:radial-gradient(circle at 88% 12%,rgba(224,181,62,.45),transparent 42%),linear-gradient(135deg,#391213 0%,#7A1E2C 55%,#A8323F 100%);
+  box-shadow:0 24px 48px -22px rgba(122,30,44,.6)}
 .pass::after{content:"";position:absolute;right:-70px;bottom:-90px;width:230px;height:230px;border-radius:50%;
   border:30px solid rgba(255,255,255,.09)}
 .pass-top{display:flex;justify-content:space-between;font-weight:700;font-size:14px;padding-right:76px}
@@ -77,7 +77,7 @@ p{margin:0 0 14px}
 label.f{display:block;font-weight:700;font-size:15px;margin:0 0 6px}
 .field{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:14px}
 .field:focus{border-color:var(--royal);outline:none}
-.btn{display:block;width:100%;background:var(--royal);color:var(--royal-ink);border:0;border-radius:999px;padding:16px;font-weight:700;font-size:17px;box-shadow:0 10px 24px -12px rgba(29,78,216,.8);cursor:pointer;text-align:center;text-decoration:none}
+.btn{display:block;width:100%;background:var(--royal);color:var(--royal-ink);border:0;border-radius:999px;padding:16px;font-weight:700;font-size:17px;box-shadow:0 10px 24px -12px rgba(122,30,44,.7);cursor:pointer;text-align:center;text-decoration:none}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .linkbtn{background:none;border:0;color:var(--royal);font-weight:700;padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
@@ -133,10 +133,10 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .notice{color:var(--warn);font-weight:700;font-size:15px;margin:-6px 0 14px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .test{font-size:13px;background:var(--chip);border-radius:8px;padding:8px 12px;margin:0 0 14px}
-.ok{width:72px;height:72px;border-radius:50%;background:#1D4ED8;display:grid;place-items:center;margin:8px auto 14px}
+.ok{width:72px;height:72px;border-radius:50%;background:#7A1E2C;display:grid;place-items:center;margin:8px auto 14px}
 
 /* Redemption screen */
-.redeem{position:fixed;inset:0;z-index:60;background:linear-gradient(160deg,#0A2370 0%,#1D4ED8 60%,#3B82F6 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+.redeem{position:fixed;inset:0;z-index:60;background:linear-gradient(160deg,#391213 0%,#7A1E2C 60%,#A8323F 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));overflow:hidden}
 .redeem::before{content:"";position:absolute;inset:-60%;background:repeating-linear-gradient(45deg,rgba(255,255,255,.09) 0 24px,transparent 24px 48px);animation:slide 1.6s linear infinite}
 @keyframes slide{to{transform:translateX(67.88px)}}
@@ -148,14 +148,14 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .redeem .clock{font-family:var(--display);font-weight:800;font-size:clamp(56px,17vw,88px);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .redeem .r-date{font-size:17px;margin:6px 0 18px}
 .redeem .r-pass{background:rgba(0,0,0,.22);border-radius:12px;padding:10px 16px;font-size:15px;margin-bottom:24px}
-.redeem .btn{background:#fff;color:#1D4ED8;max-width:320px}
+.redeem .btn{background:#fff;color:#7A1E2C;max-width:320px}
 .redeem .hint{font-size:13px;opacity:.85;margin-top:14px;max-width:30ch}
 
 /* Welcome tour */
 .scrim.center{align-items:center;padding:20px}
 .welcome{background:var(--bg);width:100%;max-width:420px;border-radius:28px;padding:30px 24px 22px;text-align:center;animation:up .25s ease-out}
 .w-icon{width:84px;height:84px;border-radius:26px;margin:0 auto 18px;display:grid;place-items:center;color:#fff;
-  background:radial-gradient(circle at 80% 15%,rgba(147,197,253,.7),transparent 50%),linear-gradient(135deg,#0A2370,#1D4ED8 60%,#3B82F6);box-shadow:0 16px 30px -16px rgba(29,78,216,.8)}
+  background:radial-gradient(circle at 80% 15%,rgba(224,181,62,.6),transparent 50%),linear-gradient(135deg,#391213,#7A1E2C 60%,#A8323F);box-shadow:0 16px 30px -16px rgba(122,30,44,.7)}
 .w-step{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:0 0 6px}
 .welcome h2{margin:0 0 10px}
 .welcome .w-body{color:var(--muted);min-height:100px;margin:0 0 8px}
@@ -176,7 +176,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:22px 0 4px}
 .goal{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin:12px 0}
 .goal .bar{height:12px;border-radius:99px;background:var(--chip);overflow:hidden;margin:10px 0 6px}
-.goal .bar i{display:block;height:100%;background:linear-gradient(90deg,#1D4ED8,#60A5FA);border-radius:99px}
+.goal .bar i{display:block;height:100%;background:linear-gradient(90deg,#7A1E2C,#C9A227);border-radius:99px}
 .board .row{cursor:default;grid-template-columns:30px 1fr auto;gap:12px}
 .board .row:hover{background:none}
 .rank{font-family:var(--display);font-weight:800;font-size:20px;color:var(--muted);text-align:center}
@@ -205,7 +205,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 <div id="layer"></div>
 
 <script>
-const ORG = "DCHS Tigers Football";
+const ORG = "DCS Tigers Football";
 const PRICE = 25;
 const TEAMS = ["Tigers Football team fund","Sample Player #7","Sample Player #12","Sample Player #22","Sample Player #54"];
 const OFFERS = [
@@ -279,7 +279,7 @@ function passCard(sample){
   </div>`;
 }
 
-const header = `<div class="top"><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" fill="var(--royal)"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" fill="var(--gold)"/></svg>${ORG}</div>`;
+const header = `<div class="top"><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" fill="#7A1E2C" stroke="#C9A227" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" fill="#E0B53E"/></svg>${ORG}</div>`;
 
 function partners(){
   return `<section class="partners" aria-label="Platform Partners">
@@ -322,7 +322,7 @@ function renderWelcome(){
 function viewBuy(){
   return `<div class="wrap">${header}
     <h1>Back the teams. Save all year.</h1>
-    <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports Dundy County High School Varsity Football.</p>
+    <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports Dundy County-Stratton Tigers Football.</p>
     ${passCard(true)}
     <div class="price"><b>$${PRICE}</b><span class="small">One pass, good for a full year</span></div>
     ${ui.fromLink ? `<p class="supporting">You’re supporting ${esc(ui.team)}</p>` : ""}
@@ -531,7 +531,7 @@ function showRedeemed(id, sample){
   closeSheet();
   const el = document.createElement("div");
   el.className = "redeem"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Deal redeemed");
-  el.innerHTML = `<div class="check"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+  el.innerHTML = `<div class="check"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#7A1E2C" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
     <div class="r-biz">${o.biz}</div>
     <div class="r-deal">${o.deal}</div>
     <div class="clock" id="clock" aria-live="off"></div>
