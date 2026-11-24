@@ -164,6 +164,32 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .dots i.on{width:24px;background:var(--royal)}
 .w-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
 
+/* Demo role switcher */
+.rolebar{position:sticky;top:0;z-index:15;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.rolebar .wrap{display:flex;align-items:center;gap:10px;padding-top:8px;padding-bottom:8px}
+.rolebar .lbl{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);flex:none}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--chip);border-radius:999px;padding:4px;flex:1}
+.seg a{text-align:center;text-decoration:none;color:var(--ink);font-weight:700;font-size:14px;padding:7px 4px;border-radius:999px}
+.seg a[aria-current="page"]{background:var(--royal);color:var(--royal-ink)}
+
+/* Coach + business dashboards */
+.kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:22px 0 4px}
+.goal{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin:12px 0}
+.goal .bar{height:12px;border-radius:99px;background:var(--chip);overflow:hidden;margin:10px 0 6px}
+.goal .bar i{display:block;height:100%;background:linear-gradient(90deg,#1D4ED8,#60A5FA);border-radius:99px}
+.board .row{cursor:default;grid-template-columns:30px 1fr auto;gap:12px}
+.board .row:hover{background:none}
+.rank{font-family:var(--display);font-weight:800;font-size:20px;color:var(--muted);text-align:center}
+.board .mini{height:6px;border-radius:99px;background:var(--chip);margin-top:6px;overflow:hidden}
+.board .mini i{display:block;height:100%;background:var(--royal);border-radius:99px}
+.board .cnt{text-align:right}
+.board .cnt b{display:block;font-size:20px;font-family:var(--display);font-weight:800}
+.copy{font-size:13px;font-weight:700;color:var(--royal);background:var(--chip);border:0;border-radius:999px;padding:6px 12px;cursor:pointer;margin-top:8px}
+.biz-head{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
+.biz-head .logo{width:58px;height:58px;font-size:20px;flex:none}
+.youbadge{display:inline-block;font-size:12px;font-weight:800;background:var(--royal);color:var(--royal-ink);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+.supporting{background:var(--chip);border-radius:14px;padding:10px 14px;font-weight:700;font-size:15px;margin:0 0 14px}
+
 @media (prefers-reduced-motion: reduce){
   .welcome{animation:none}
   .redeem::before,.redeem .check,.sheet{animation:none}
@@ -199,8 +225,19 @@ const LIMIT = {once:"One time",monthly:"Once a month",unlimited:"Every visit"};
 const CATS = ["All","Food","Fun","Shopping","Services"];
 const KEY = "hometown-pass-demo";
 
+/* Demo numbers for the coach and business views */
+const GOAL = 150;
+const SALES = {"Tigers Football team fund":14,"Sample Player #7":23,"Sample Player #12":17,"Sample Player #22":31,"Sample Player #54":9};
+const BIZSTATS = {marios:[19,71],sunrise:[24,88],elsol:[31,102],scoops:[12,40],bowl:[8,27],cinema:[15,49],shack:[6,21],hardware:[9,30],bloom:[4,13],wash:[7,26],cuts:[11,38]};
+
 let state = load();
-let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0]};
+let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0], biz:OFFERS[0].id, fromLink:false};
+(function(){
+  const p = new URLSearchParams(location.search).get("player");
+  if(!p) return;
+  const t = TEAMS.find(x=>x.endsWith("#"+p));
+  if(t){ ui.team = t; ui.fromLink = true; }
+})();
 let clockTimer = null;
 
 function load(){
@@ -288,6 +325,7 @@ function viewBuy(){
     <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports Dundy County High School Varsity Football.</p>
     ${passCard(true)}
     <div class="price"><b>$${PRICE}</b><span class="small">One pass, good for a full year</span></div>
+    ${ui.fromLink ? `<p class="supporting">You’re supporting ${esc(ui.team)}</p>` : ""}
     <label class="f" for="team">Which player gets credit?</label>
     <select class="field" id="team">${TEAMS.map(t=>`<option${t===ui.team?" selected":""}>${t}</option>`).join("")}</select>
     <button class="btn" data-action="checkout">Buy pass for $${PRICE}</button>
@@ -349,6 +387,94 @@ function offerRows(){
   }).join("");
 }
 
+/* ---------- Demo role switcher ---------- */
+function roleBar(){
+  const r = ui.view==="coach" ? "coach" : ui.view==="biz" ? "biz" : "fan";
+  const a = (id,href,label)=>`<a href="${href}"${r===id?' aria-current="page"':""}>${label}</a>`;
+  return `<div class="rolebar"><div class="wrap"><span class="lbl">Demo</span><nav class="seg" aria-label="View the app as">
+    ${a("fan", state.purchased?"#offers":"#pass","Fan")}${a("coach","#coach","Coach")}${a("biz","#biz","Business")}</nav></div></div>`;
+}
+
+/* ---------- Coach dashboard ---------- */
+function teamSales(){
+  const s = Object.assign({},SALES);
+  if(state.purchased && s[state.team]!==undefined) s[state.team]++;
+  return s;
+}
+function playerLink(t){
+  const m = t.match(/#(\d+)$/);
+  const base = location.origin + location.pathname;
+  return m ? `${base}?player=${m[1]}` : base;
+}
+function viewCoach(){
+  const s = teamSales();
+  const total = Object.values(s).reduce((a,b)=>a+b,0);
+  const raised = total*PRICE;
+  const pct = Math.min(100,Math.round(total/GOAL*100));
+  const rows = Object.entries(s).sort((a,b)=>b[1]-a[1]);
+  const top = rows[0][1];
+  const redeemed = Object.values(BIZSTATS).reduce((a,b)=>a+b[1],0) + state.redemptions.length;
+  return `<div class="wrap">${header}
+    <p class="kicker">Coach dashboard</p>
+    <h2 style="margin-top:0">Season fundraiser</h2>
+    <div class="stats">
+      <div class="stat"><b>$${raised.toLocaleString()}</b><span class="small">Raised</span></div>
+      <div class="stat"><b>${total}</b><span class="small">Passes sold</span></div>
+    </div>
+    <div class="goal"><strong>${pct}% of goal</strong><span class="small"> · ${total} of ${GOAL} passes ($${(GOAL*PRICE).toLocaleString()})</span>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <span class="small">${GOAL-total>0 ? `${GOAL-total} more passes to hit the goal.` : "Goal reached!"}</span></div>
+    <h3>Player leaderboard</h3>
+    <div class="list board">${rows.map(([t,n],i)=>`<div class="row"><span class="rank">${i+1}</span>
+      <div><div class="deal">${esc(t)}${state.purchased&&state.team===t?'<span class="youbadge">+1 you</span>':""}</div>
+        <div class="mini"><i style="width:${Math.round(n/top*100)}%"></i></div>
+        ${t.includes("#")?`<button class="copy" data-action="copy" data-link="${playerLink(t)}">Copy share link</button>`:""}</div>
+      <div class="cnt"><b>${n}</b><span class="small">$${n*PRICE}</span></div></div>`).join("")}</div>
+    <p class="small" style="margin-top:12px">Each player texts their link to family and friends. Anyone who buys through it is credited to that player automatically.</p>
+    <h3>Community impact</h3>
+    <div class="stats">
+      <div class="stat"><b>${OFFERS.length}</b><span class="small">Local businesses</span></div>
+      <div class="stat"><b>${redeemed}</b><span class="small">Deals redeemed</span></div>
+    </div>
+    ${partners()}
+    <p class="small" style="margin-top:28px">Demo numbers. In the live app these update with every sale.</p>
+  </div>`;
+}
+
+/* ---------- Business view ---------- */
+function viewBiz(){
+  const o = OFFERS.find(x=>x.id===ui.biz);
+  const mine = state.redemptions.filter(r=>r.offerId===o.id).length;
+  const [month,total] = BIZSTATS[o.id]; const m = month+mine, t = total+mine;
+  const now = Date.now();
+  const recent = [
+    ...state.redemptions.filter(r=>r.offerId===o.id).map(r=>({ts:r.ts,pass:state.passNo})).reverse(),
+    {ts:now-2.2*3600e3,pass:"214"},{ts:now-26*3600e3,pass:"187"},{ts:now-31*3600e3,pass:"342"},{ts:now-3.1*86400e3,pass:"129"}
+  ].slice(0,5);
+  return `<div class="wrap">${header}
+    <p class="kicker">Business view</p>
+    <label class="f" for="bizpick">Viewing as</label>
+    <select class="field" id="bizpick">${OFFERS.map(x=>`<option value="${x.id}"${x.id===o.id?" selected":""}>${x.biz}</option>`).join("")}</select>
+    <div class="biz-head">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Your deal: ${o.deal}</div></div></div>
+    <div class="stats" style="margin-top:14px">
+      <div class="stat"><b>${m}</b><span class="small">Visits this month</span></div>
+      <div class="stat"><b>${t}</b><span class="small">Visits this season</span></div>
+    </div>
+    <p class="small" style="margin-top:14px">Every visit is a pass holder who came in because of your deal, and they’re backing ${ORG} while they’re here.</p>
+    <h3>At the register</h3>
+    <p>Your cashier only has to look. The customer taps Redeem and shows a live screen with a ticking clock and moving stripes, so a screenshot won’t work.</p>
+    <button class="btn" data-action="biz-preview" data-id="${o.id}">See what your cashier sees</button>
+    <h3>Recent visits</h3>
+    <div class="list hist">${recent.map(r=>{const d=new Date(r.ts);
+      return `<div class="row">${logo(o)}<div><div class="deal">Pass No. ${r.pass}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>
+    <h3>Deal rules</h3>
+    <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${o.fine}</dd><dt>Runs</dt><dd>Through Aug 31, 2027</dd></dl>
+    <p class="small">The app enforces the limit automatically, so a once-a-month deal can’t be used twice in a month.</p>
+    ${partners()}
+    <p class="small" style="margin-top:28px">Demo numbers. No sign-up or equipment needed for businesses.</p>
+  </div>`;
+}
+
 /* ---------- Sheets ---------- */
 function openSheet(html){
   document.getElementById("layer").innerHTML = `<div class="scrim" data-action="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
@@ -399,8 +525,9 @@ function sheetConfirm(id){
 }
 
 /* ---------- Redemption screen ---------- */
-function showRedeemed(id){
+function showRedeemed(id, sample){
   const o = OFFERS.find(x=>x.id===id);
+  const passLine = sample ? "Pass No. 214, Jordan Ellis" : `Pass No. ${state.passNo}, ${esc(state.name)}`;
   closeSheet();
   const el = document.createElement("div");
   el.className = "redeem"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Deal redeemed");
@@ -409,7 +536,7 @@ function showRedeemed(id){
     <div class="r-deal">${o.deal}</div>
     <div class="clock" id="clock" aria-live="off"></div>
     <div class="r-date" id="rdate"></div>
-    <div class="r-pass">Pass No. ${state.passNo}, ${esc(state.name)}</div>
+    <div class="r-pass">${passLine}</div>
     <button class="btn" data-action="done">Done</button>
     <div class="hint">On a real redemption the clock ticks and the stripes move. A screenshot can’t.</div>`;
   document.getElementById("layer").appendChild(el);
@@ -423,12 +550,16 @@ function showRedeemed(id){
 /* ---------- Routing & events ---------- */
 function route(){
   const h = location.hash.slice(1);
-  ui.view = (h==="offers"||h==="pass") ? h : (state.purchased ? "offers" : "pass");
+  ui.view = ["offers","pass","coach","biz"].includes(h) ? h : (state.purchased ? "offers" : "pass");
   render();
 }
 function render(){
   const app = document.getElementById("app");
-  app.innerHTML = ui.view==="offers" ? viewOffers() : (state.purchased ? viewPass() : viewBuy());
+  const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : (state.purchased ? viewPass() : viewBuy());
+  app.innerHTML = roleBar() + body;
+  document.querySelector(".tabs").hidden = (ui.view==="coach" || ui.view==="biz");
+  const bp = document.getElementById("bizpick");
+  if(bp) bp.addEventListener("change", e=>{ ui.biz=e.target.value; render(); });
   document.getElementById("tab-offers").setAttribute("aria-current", ui.view==="offers"?"page":"false");
   document.getElementById("tab-pass").setAttribute("aria-current", ui.view==="pass"?"page":"false");
   document.getElementById("tab-pass").lastChild.textContent = state.purchased ? "My pass" : "Get a pass";
@@ -462,6 +593,13 @@ document.addEventListener("click", e=>{
   if(a==="redeem-confirm"){
     state.redemptions.push({offerId:t.dataset.id, ts:Date.now()}); save();
     showRedeemed(t.dataset.id);
+  }
+  if(a==="biz-preview"){ showRedeemed(t.dataset.id, true); return; }
+  if(a==="copy"){
+    const link = t.dataset.link;
+    const ok = ()=>{ t.textContent = "Link copied"; setTimeout(()=>{ t.textContent = "Copy share link"; },1800); };
+    try{ navigator.clipboard.writeText(link).then(ok, ()=>{ t.textContent = link; }); }catch(err){ t.textContent = link; }
+    return;
   }
   if(a==="done"){ clearInterval(clockTimer); document.getElementById("layer").innerHTML=""; render(); }
   if(a==="reset"){ state = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[]}; state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
