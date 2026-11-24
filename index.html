@@ -225,19 +225,40 @@ const LIMIT = {once:"One time",monthly:"Once a month",unlimited:"Every visit"};
 const GENEROSITY = {once:0,monthly:1,unlimited:2};
 const NEW_COLORS = ["#0F766E","#A16207","#7E22CE","#BE123C","#15803D","#1D4ED8"];
 const SEED_PENDING = [
-  {pid:"p1",type:"change",offerId:"bowl",ts:Date.now()-5*3600e3,proposed:{deal:"Free shoe rental for up to 2",limit:"monthly"}},
-  {pid:"p2",type:"new",ts:Date.now()-26*3600e3,proposed:{biz:"Prairie Rose Bakery",cat:"Food",addr:"712 Chief St",contact:"owner@prairierose.example",deal:"Free cookie with any coffee",limit:"monthly",fine:"One cookie per visit."}}
+  {pid:"p1",type:"change",offerId:"bowl",ts:Date.now()-5*3600e3,proposed:{deal:"Free shoe rental for up to 2",limit:"monthly"}}
 ];
+const SEED_ADDED = [
+  {id:"prairie",biz:"Prairie Rose Bakery",cat:"Food",addr:"712 Chief St",owner:"Linda Weers",contact:"(308) 555-0177",color:"#A16207",value:4,
+   contract:{file:"Prairie-Rose-partner-agreement.pdf",level:"Community MVP",ends:"2027-08-31"},status:"submitted",submitted:Date.now()-26*3600e3,
+   deal:"Free cookie with any coffee",limit:"monthly",fine:"One cookie per visit."},
+  {id:"flowers",biz:"Benkelman Flower Shop",cat:"Shopping",addr:"505 Chief St",owner:"Rachel Fries",contact:"rachel@benkelmanflowers.example",color:"#0F766E",value:5,
+   contract:{file:"Flower-Shop-agreement.pdf",level:"Community MVP",ends:"2027-08-31"},status:"invited",invited:Date.now()-2*86400e3}
+];
+const H = (d,h)=>Date.now()-d*86400e3-h*3600e3;
+const SEED_HOLDERS = [
+  {passNo:"214",name:"Megan Schultz",email:"megan.schultz@example.com",team:"Sample Player #22",member:{name:"Kyle Schultz",status:"active"},log:[],
+   redemptions:[{offerId:"marios",ts:H(0,2.2),by:"Kyle Schultz"},{offerId:"sunrise",ts:H(4,1),by:"Megan Schultz"}]},
+  {passNo:"187",name:"Tyler Harsh",email:"tharsh@example.com",team:"Sample Player #7",member:null,log:[],
+   redemptions:[{offerId:"shack",ts:H(0,20),by:"Tyler Harsh"},{offerId:"marios",ts:H(1,2),by:"Tyler Harsh"}]},
+  {passNo:"342",name:"Ashley Kroeger",email:"ashleyk@example.com",team:"Tigers Football team fund",member:null,log:[],
+   redemptions:[{offerId:"elsol",ts:H(1,7),by:"Ashley Kroeger"}]},
+  {passNo:"129",name:"Dan Novak",email:"dnovak@example.com",team:"Sample Player #12",member:{name:"Lori Novak",status:"active"},log:[],
+   redemptions:[{offerId:"cuts",ts:H(3,2),by:"Dan Novak"},{offerId:"bowl",ts:H(9,5),by:"Lori Novak"}]}
+];
+const LEVELS = ["Community MVP","Conference Partner","Presenting Partner"];
+const OWNERS = {marios:"Mario Rossi",sunrise:"Jen Haddix",elsol:"Luis Ortega",scoops:"Becky Lambert",bowl:"Gary Pfeifer",cinema:"Tom Weller",shack:"Brett Kunkel",hardware:"Dale Shaw",bloom:"Amy Kenney",wash:"Chris Odle",cuts:"Marcus Bell"};
+let ALLBIZ = [];
 let OFFERS = [];
 function rebuildOffers(){
   const added = (state.added||[]);
   const today = new Date().toISOString().slice(0,10);
-  OFFERS = [...BASE_OFFERS, ...added].map(o=>{ const x = Object.assign({}, o, (state.edits||{})[o.id]||{}); if(x.paused && x.paused<=today) x.paused = null; return x; });
-  if(!OFFERS.find(o=>o.id===ui.biz)) ui.biz = OFFERS[0].id;
+  ALLBIZ = [...BASE_OFFERS.map(o=>Object.assign({status:"live",owner:OWNERS[o.id]},o)), ...added].map(o=>{ const x = Object.assign({}, o, (state.edits||{})[o.id]||{}); if(x.paused && x.paused<=today) x.paused = null; return x; });
+  OFFERS = ALLBIZ.filter(o=>o.status==="live");
+  if(!ALLBIZ.find(o=>o.id===ui.biz)) ui.biz = OFFERS[0].id;
 }
 function clean(v){ return String(v||"").replace(/[<>]/g,"").trim(); }
 const CATS = ["All","Food","Fun","Shopping","Services"];
-const KEY = "hometown-pass-demo";
+const KEY = "hometown-pass-demo-v2";
 
 /* Demo numbers for the coach and business views */
 const GOAL = 150;
@@ -256,8 +277,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:[],pending:JSON.parse(JSON.stringify(SEED_PENDING))});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:[],pending:JSON.parse(JSON.stringify(SEED_PENDING))};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[]});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[]};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -461,19 +482,35 @@ function viewCoach(){
 
 /* ---------- Business view ---------- */
 function viewBiz(){
-  const o = OFFERS.find(x=>x.id===ui.biz);
+  const o = ALLBIZ.find(x=>x.id===ui.biz);
+  const signedIn = `<div class="supporting" style="margin-top:18px;display:flex;justify-content:space-between;gap:10px;align-items:center"><span>Signed in as ${esc(o.owner||"the owner")} · ${o.biz}</span></div>`;
+  const demoNote = `<p class="small" style="margin-top:20px">Demo: business owners only ever see their own business. To view a different one, open it from the Admin tab.</p>`;
+  if(o.status==="invited") return `<div class="wrap">${header}<p class="kicker">Business view</p>${signedIn}
+    <h2>Set up your deal</h2>
+    <p class="lede">${ORG} added ${o.biz} as a ${o.contract.level}. Tell pass holders what they get. The program reviews it before it goes live.</p>
+    <label class="f" for="sd-deal">Your deal</label><input class="field" id="sd-deal" placeholder="e.g. 15% off any bouquet">
+    <label class="f" for="sd-limit">How often can a pass holder use it?</label>
+    <select class="field" id="sd-limit">${Object.entries(LIMIT).map(([k,v])=>`<option value="${k}"${k==="monthly"?" selected":""}>${v}</option>`).join("")}</select>
+    <label class="f" for="sd-fine">Fine print</label><textarea class="field" id="sd-fine" rows="2" placeholder="e.g. In-store only. Not valid on holidays."></textarea>
+    <label class="f" for="sd-addr">Address</label><input class="field" id="sd-addr" value="${esc(o.addr)}">
+    <button class="btn" data-action="biz-setup-send">Submit for approval</button>
+    ${demoNote}</div>`;
+  if(o.status==="submitted") return `<div class="wrap">${header}<p class="kicker">Business view</p>${signedIn}
+    <h2>Thanks, you’re almost live</h2>
+    <p class="lede">The program is reviewing your deal. We’ll text you when it’s on the pass.</p>
+    <dl class="meta"><dt>Deal</dt><dd><strong>${esc(o.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd></dl>
+    ${demoNote}</div>`;
   const mine = state.redemptions.filter(r=>r.offerId===o.id).length;
   const [month,total] = BIZSTATS[o.id]||[0,0]; const m = month+mine, t = total+mine;
   const now = Date.now();
   const recent = [
     ...state.redemptions.filter(r=>r.offerId===o.id).map(r=>({ts:r.ts,pass:state.passNo})).reverse(),
-    {ts:now-2.2*3600e3,pass:"214"},{ts:now-26*3600e3,pass:"187"},{ts:now-31*3600e3,pass:"342"},{ts:now-3.1*86400e3,pass:"129"}
+    ...(BIZSTATS[o.id] ? [{ts:now-2.2*3600e3,pass:"214"},{ts:now-26*3600e3,pass:"187"},{ts:now-31*3600e3,pass:"342"},{ts:now-3.1*86400e3,pass:"129"}] : [])
   ].slice(0,5);
   return `<div class="wrap">${header}
     <p class="kicker">Business view</p>
-    <label class="f" for="bizpick">Viewing as</label>
-    <select class="field" id="bizpick">${OFFERS.map(x=>`<option value="${x.id}"${x.id===o.id?" selected":""}>${x.biz}</option>`).join("")}</select>
-    <div class="biz-head">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Your deal: ${o.deal}</div></div></div>
+    ${signedIn}
+    <div class="biz-head">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Your deal: ${esc(o.deal)}</div></div></div>
     ${bizStatusBox(o)}
     <div class="row2" style="margin-top:12px">
       <button class="btn" data-action="biz-edit">Edit deal</button>
@@ -488,16 +525,13 @@ function viewBiz(){
     <p>Your cashier only has to look. The customer taps Redeem and shows a live screen with a ticking clock and moving stripes, so a screenshot won’t work.</p>
     <button class="btn" data-action="biz-preview" data-id="${o.id}">See what your cashier sees</button>
     <h3>Recent visits</h3>
-    <div class="list hist">${recent.map(r=>{const d=new Date(r.ts);
-      return `<div class="row">${logo(o)}<div><div class="deal">Pass No. ${r.pass}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>
+    ${recent.length ? `<div class="list hist">${recent.map(r=>{const d=new Date(r.ts);
+      return `<div class="row">${logo(o)}<div><div class="deal">Pass No. ${r.pass}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>` : `<div class="list"><div class="empty">No visits yet. They’ll show up here as pass holders redeem your deal.</div></div>`}
     <h3>Deal rules</h3>
-    <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${o.fine}</dd><dt>Runs</dt><dd>Through Aug 31, 2027</dd></dl>
+    <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd><dt>Runs</dt><dd>Through Aug 31, 2027</dd></dl>
     <p class="small">The app enforces the limit automatically, so a once-a-month deal can’t be used twice in a month. A pass can include one household member, and the limit is shared, so a couple gets one deal per month, not two.</p>
     ${partners()}
-    <div class="goal" style="margin-top:28px"><strong>Not on the pass yet?</strong>
-      <p class="small" style="margin:6px 0 12px">Local businesses can sign up in two minutes. Your deal goes live once the program approves it.</p>
-      <button class="btn ghost" data-action="biz-join">Add your business</button></div>
-    <p class="small" style="margin-top:20px">Business owners sign in with a link sent to their email or phone, with no password, and only see their own business. Demo numbers.</p>
+    ${demoNote}
   </div>`;
 }
 
@@ -536,51 +570,117 @@ function sheetBizPause(){
     <button class="btn" data-action="biz-pause-save">Pause deal</button>
     <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
 }
-function sheetBizJoin(){
-  openSheet(`<h2 style="margin-top:0">Add your business</h2>
-    <p class="small">Your deal goes live on the pass once the program approves it.</p>
-    <label class="f" for="nj-biz">Business name</label><input class="field" id="nj-biz" value="Benkelman Flower Shop">
-    <label class="f" for="nj-cat">Category</label><select class="field" id="nj-cat">${CATS.slice(1).map(c=>`<option${c==="Shopping"?" selected":""}>${c}</option>`).join("")}</select>
-    <label class="f" for="nj-addr">Address</label><input class="field" id="nj-addr" value="505 Chief St">
-    <label class="f" for="nj-contact">Your email or mobile</label><input class="field" id="nj-contact" value="hello@benkelmanflowers.example">
-    <label class="f" for="nj-deal">Your deal</label><input class="field" id="nj-deal" value="15% off any bouquet">
-    <label class="f" for="nj-limit">How often</label><select class="field" id="nj-limit">${Object.entries(LIMIT).map(([k,v])=>`<option value="${k}"${k==="monthly"?" selected":""}>${v}</option>`).join("")}</select>
-    <label class="f" for="nj-fine">Fine print</label><textarea class="field" id="nj-fine" rows="2">In-store only.</textarea>
-    <button class="btn" data-action="biz-join-send">Submit for approval</button>
-    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
-}
 function toast(msg){
   openSheet(`<div style="text-align:center"><div class="ok"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
     <p style="font-weight:700">${msg}</p><button class="btn" data-action="close">OK</button></div>`);
 }
 
 /* ---------- Admin ---------- */
+const BIZ_TAG = o => o.status==="invited" ? ["Waiting on deal form","used"] : o.status==="submitted" ? ["Ready to approve",""] : o.paused ? ["Paused","used"] : pendingFor(o.id) ? ["Change pending",""] : ["Live",""];
+function holders(){
+  const list = state.holders.map(h=>Object.assign(h,{self:false}));
+  if(state.purchased) list.unshift({self:true, passNo:state.passNo, name:state.name, email:state.email, team:state.team, member:state.member, redemptions:state.redemptions, log:state.selfLog});
+  return list;
+}
+function holderRows(){
+  const q = (ui.hq||"").trim().toLowerCase();
+  const list = holders().filter(h=>!q || (h.name+" "+h.email+" "+h.passNo+" "+(h.member?h.member.name:"")).toLowerCase().includes(q));
+  if(!list.length) return `<div class="empty">No pass holders match “${esc(ui.hq)}”.</div>`;
+  return list.map(h=>`<button class="row" data-action="adm-holder" data-pass="${h.passNo}" style="grid-template-columns:46px 1fr auto">
+    <span class="logo" style="background:var(--royal)" aria-hidden="true">${initials(h.name)}</span>
+    <div><div class="deal">${esc(h.name)}${h.member&&h.member.status==="active"?` + ${esc(h.member.name.split(" ")[0])}`:""}${h.self?'<span class="youbadge">you</span>':""}</div><div class="small">Pass No. ${h.passNo} · ${h.redemptions.length} used</div></div>
+    <span class="small">›</span></button>`).join("");
+}
 function viewAdmin(){
-  const pend = state.pending;
-  const paused = OFFERS.filter(o=>o.paused);
+  const changes = state.pending;
+  const ready = ALLBIZ.filter(o=>o.status==="submitted");
+  const n = changes.length + ready.length;
   return `<div class="wrap">${header}
     <p class="kicker">Admin</p>
-    <h2 style="margin-top:0">Approvals${pend.length?` (${pend.length})`:""}</h2>
-    ${pend.length ? pend.map(p=>{
-      if(p.type==="change"){ const o = OFFERS.find(x=>x.id===p.offerId);
+    <h2 style="margin-top:0">Approvals${n?` (${n})`:""}</h2>
+    ${ready.map(o=>`<div class="goal"><span class="tag">New deal</span>
+        <div class="biz-head" style="margin:10px 0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Submitted ${fmtDay(new Date(o.submitted))} by ${esc(o.owner)}</div></div></div>
+        <dl class="meta" style="margin:0 0 14px"><dt>Deal</dt><dd><strong>${esc(o.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd><dt>Contract</dt><dd>${o.contract.level} · ${esc(o.contract.file)}</dd></dl>
+        <div class="row2"><button class="btn ghost" data-action="adm-new-decline" data-id="${o.id}">Send back</button><button class="btn" data-action="adm-new-approve" data-id="${o.id}">Approve</button></div></div>`).join("")}
+    ${changes.map(p=>{ const o = ALLBIZ.find(x=>x.id===p.offerId);
         return `<div class="goal"><span class="tag">Deal change</span>
           <div class="biz-head" style="margin:10px 0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Requested ${fmtDay(new Date(p.ts))}</div></div></div>
-          <dl class="meta" style="margin:0 0 14px"><dt>Now</dt><dd>${o.deal} · ${LIMIT[o.limit]}</dd><dt>Wants</dt><dd><strong>${esc(p.proposed.deal)} · ${LIMIT[p.proposed.limit]}</strong></dd></dl>
+          <dl class="meta" style="margin:0 0 14px"><dt>Now</dt><dd>${esc(o.deal)} · ${LIMIT[o.limit]}</dd><dt>Wants</dt><dd><strong>${esc(p.proposed.deal)} · ${LIMIT[p.proposed.limit]}</strong></dd></dl>
           <div class="row2"><button class="btn ghost" data-action="adm-decline" data-pid="${p.pid}">Decline</button><button class="btn" data-action="adm-approve" data-pid="${p.pid}">Approve</button></div></div>`;
-      }
-      const n = p.proposed;
-      return `<div class="goal"><span class="tag">New business</span>
-        <div class="biz-head" style="margin:10px 0">${logo({biz:n.biz,color:"#6E5D59"})}<div><div style="font-weight:700">${esc(n.biz)}</div><div class="small">${esc(n.cat)} · ${esc(n.addr)}</div></div></div>
-        <dl class="meta" style="margin:0 0 14px"><dt>Deal</dt><dd><strong>${esc(n.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[n.limit]}</dd><dt>Details</dt><dd>${esc(n.fine)}</dd><dt>Contact</dt><dd>${esc(n.contact)}</dd></dl>
-        <div class="row2"><button class="btn ghost" data-action="adm-decline" data-pid="${p.pid}">Decline</button><button class="btn" data-action="adm-approve" data-pid="${p.pid}">Approve</button></div></div>`;
-    }).join("") : `<div class="list"><div class="empty">You’re all caught up. New requests from businesses show up here.</div></div>`}
-    <h3>Businesses on the pass (${OFFERS.length})</h3>
-    <div class="list">${OFFERS.map(o=>`<a class="row" href="#biz" data-action="adm-open" data-id="${o.id}" style="text-decoration:none;color:inherit">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div></div>
-      <span class="tag${o.paused?" used":""}">${o.paused?"Paused":pendingFor(o.id)?"Change pending":"Live"}</span></a>`).join("")}</div>
-    <p class="small" style="margin-top:12px">${paused.length} paused. Only you and the coaches can approve deal changes and new businesses.</p>
+    }).join("")}
+    ${n ? "" : `<div class="list"><div class="empty">You’re all caught up.</div></div>`}
+
+    <h3>Pass holders</h3>
+    <input class="field search" id="hsearch" type="search" placeholder="Search name, email or pass number" value="${esc(ui.hq||"")}" aria-label="Search pass holders">
+    <div class="list" id="hlist">${holderRows()}</div>
+
+    <h3 style="display:flex;justify-content:space-between;align-items:center">Businesses (${ALLBIZ.length})</h3>
+    <button class="btn" data-action="adm-add-biz" style="margin-bottom:12px">Add a business</button>
+    <div class="list">${ALLBIZ.map(o=>{ const [tag,cls] = BIZ_TAG(o);
+      return `<button class="row" data-action="adm-biz" data-id="${o.id}">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.status==="invited"?"Deal not set up yet":esc(o.deal)}</div></div>
+      <span class="tag ${cls}">${tag}</span></button>`;}).join("")}</div>
+    <p class="small" style="margin-top:12px">Coaches add each business with its signed agreement. The business gets a link to set up its deal, and it goes live after approval.</p>
     ${partners()}
   </div>`;
 }
+function sheetAddBiz(){
+  openSheet(`<h2 style="margin-top:0">Add a business</h2>
+    <p class="small">We’ll send the owner a sign-in link to set up their deal. It goes live after you approve it.</p>
+    <label class="f" for="ab-biz">Business name</label><input class="field" id="ab-biz" value="Rodeo Steakhouse">
+    <label class="f" for="ab-cat">Category</label><select class="field" id="ab-cat">${CATS.slice(1).map(c=>`<option>${c}</option>`).join("")}</select>
+    <label class="f" for="ab-addr">Address</label><input class="field" id="ab-addr" value="618 Chief St">
+    <label class="f" for="ab-owner">Owner’s name</label><input class="field" id="ab-owner" value="Mike Dreher">
+    <label class="f" for="ab-contact">Owner’s email or mobile</label><input class="field" id="ab-contact" value="(308) 555-0110">
+    <h3 style="margin-top:6px">Contract</h3>
+    <label class="f" for="ab-level">Partnership level</label><select class="field" id="ab-level">${LEVELS.map(l=>`<option>${l}</option>`).join("")}</select>
+    <label class="f" for="ab-ends">Agreement ends</label><input class="field" id="ab-ends" type="date" value="2027-08-31">
+    <label class="f" for="ab-file">Signed agreement</label><input class="field" id="ab-file" type="file" accept=".pdf,image/*">
+    <button class="btn" data-action="adm-add-biz-save">Add and send deal form</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function sheetAdmBiz(id){
+  const o = ALLBIZ.find(x=>x.id===id); const [tag] = BIZ_TAG(o);
+  const c = o.contract || {level:"Community MVP",file:"Signed agreement on file",ends:"2027-08-31"};
+  openSheet(`<div class="biz-head" style="margin-top:0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">${tag}</div></div></div>
+    <dl class="meta"><dt>Owner</dt><dd>${esc(o.owner||"Owner on file")}${o.contact?`<br><span class="small">${esc(o.contact)}</span>`:""}</dd>
+      <dt>Address</dt><dd>${esc(o.addr)}</dd><dt>Contract</dt><dd>${c.level}<br><span class="small">📄 ${esc(c.file)} · ends ${fmtDay(new Date(c.ends+"T12:00"))}</span></dd>
+      ${o.status==="invited"?`<dt>Deal</dt><dd>Form sent ${fmtDay(new Date(o.invited))}, not submitted yet</dd>`:`<dt>Deal</dt><dd>${esc(o.deal)} · ${LIMIT[o.limit]}</dd>`}</dl>
+    ${o.status==="invited"?`<button class="btn ghost" data-action="adm-resend" style="margin-bottom:10px">Resend deal form</button>`:""}
+    <a class="btn" href="#biz" data-action="adm-open" data-id="${o.id}">Open their business view</a>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Close</button>`);
+}
+function findHolder(p){ return holders().find(h=>h.passNo===p); }
+function sheetHolder(p, note){
+  const h = findHolder(p); ui.holder = p;
+  const hist = [...h.redemptions].map((r,i)=>({r,i})).reverse();
+  const logRows = (h.log||[]).slice().reverse();
+  openSheet(`<h2 style="margin-top:0">Pass No. ${h.passNo}</h2>
+    ${note?`<p class="supporting">${note}</p>`:""}
+    <label class="f" for="ho-name">Name</label><input class="field" id="ho-name" value="${esc(h.name)}">
+    <label class="f" for="ho-email">Email</label><input class="field" id="ho-email" value="${esc(h.email)}">
+    <label class="f" for="ho-team">Player credited</label><select class="field" id="ho-team">${TEAMS.map(t=>`<option${t===h.team?" selected":""}>${t}</option>`).join("")}</select>
+    <button class="btn ghost" data-action="ho-save">Save account changes</button>
+    <h3>Household</h3>
+    ${h.member ? `<div class="list"><div class="row" style="cursor:default;grid-template-columns:46px 1fr auto"><span class="logo" style="background:var(--royal)" aria-hidden="true">${initials(h.member.name)}</span><div><div class="deal">${esc(h.member.name)}</div><div class="small">${h.member.status==="active"?"Active":"Invite pending"}</div></div><button class="linkbtn" data-action="ho-rm-member">Remove</button></div></div>`
+      : `<p class="small">No household member.${h.self&&state.changesUsed?` <button class="linkbtn" data-action="ho-restore-change">Give back their household change</button>`:""}</p>`}
+    <h3>Redemptions</h3>
+    ${hist.length ? `<div class="list hist">${hist.map(({r,i})=>{const o=ALLBIZ.find(x=>x.id===r.offerId); const d=new Date(r.ts);
+      return `<div class="row" style="grid-template-columns:46px 1fr auto">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${esc(o.deal)}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}${r.by?` · ${esc(r.by.split(" ")[0])}`:""}</div></div>
+        <button class="copy" data-action="ho-undo" data-i="${i}" style="margin:0">Undo</button></div>`;}).join("")}</div>` : `<div class="list"><div class="empty">No deals used yet.</div></div>`}
+    <p class="small" style="margin-top:8px">Undo gives the deal back, for example if it was used by mistake or the cashier didn’t honor it.</p>
+    ${logRows.length?`<h3>Admin activity</h3><div class="list">${logRows.map(l=>`<div class="row" style="cursor:default;grid-template-columns:1fr"><div><div class="deal" style="font-weight:500">${esc(l.text)}</div><div class="small">${fmtDay(new Date(l.ts))} · by Admin</div></div></div>`).join("")}</div>`:""}
+    <button class="linkbtn" data-action="close" style="display:block;margin:16px auto 0">Done</button>`);
+}
+function sheetUndo(i){
+  const h = findHolder(ui.holder); const r = h.redemptions[i]; const o = ALLBIZ.find(x=>x.id===r.offerId);
+  openSheet(`<h2 style="margin-top:0">Undo this redemption?</h2>
+    <p><strong>${o.biz}</strong>: ${esc(o.deal)}, used ${fmtDay(new Date(r.ts))}. ${esc(h.name.split(" ")[0])} will be able to use it again.</p>
+    <label class="f">Reason</label>
+    <div class="chips" role="radiogroup" aria-label="Reason">${["Used by mistake","Cashier didn’t honor it","Other"].map((x,k)=>`<button class="chip" data-action="undo-reason" data-r="${x}" aria-pressed="${k===0}">${x}</button>`).join("")}</div>
+    <div class="row2"><button class="btn ghost" data-action="ho-back">Cancel</button><button class="btn" data-action="ho-undo-confirm" data-i="${i}">Undo redemption</button></div>`);
+  ui.undoReason = "Used by mistake";
+}
+function holderLog(h, text){ const entry = {ts:Date.now(), text}; if(h.self) state.selfLog.push(entry); else h.log.push(entry); }
 
 /* ---------- Household member ---------- */
 const MAX_CHANGES = 1;
@@ -712,8 +812,8 @@ function render(){
   const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : ui.view==="admin" ? viewAdmin() : (state.purchased ? viewPass() : viewBuy());
   app.innerHTML = roleBar() + body;
   document.querySelector(".tabs").hidden = ["coach","biz","admin"].includes(ui.view);
-  const bp = document.getElementById("bizpick");
-  if(bp) bp.addEventListener("change", e=>{ ui.biz=e.target.value; render(); });
+  const hs = document.getElementById("hsearch");
+  if(hs) hs.addEventListener("input", e=>{ ui.hq=e.target.value; document.getElementById("hlist").innerHTML = holderRows(); });
   document.getElementById("tab-offers").setAttribute("aria-current", ui.view==="offers"?"page":"false");
   document.getElementById("tab-pass").setAttribute("aria-current", ui.view==="pass"?"page":"false");
   document.getElementById("tab-pass").lastChild.textContent = state.purchased ? "My pass" : "Get a pass";
@@ -770,24 +870,62 @@ document.addEventListener("click", e=>{
     state.edits[ui.biz] = Object.assign({}, state.edits[ui.biz], {paused:v}); save(); render(); toast(`Paused until ${fmtDay(new Date(v+"T12:00"))}.`); return;
   }
   if(a==="biz-resume"){ state.edits[ui.biz] = Object.assign({}, state.edits[ui.biz], {paused:null}); save(); render(); return; }
-  if(a==="biz-join"){ sheetBizJoin(); return; }
-  if(a==="biz-join-send"){
-    const g = id=>clean(document.getElementById(id).value);
-    const n = {biz:g("nj-biz"),cat:document.getElementById("nj-cat").value,addr:g("nj-addr"),contact:g("nj-contact"),deal:g("nj-deal"),limit:document.getElementById("nj-limit").value,fine:g("nj-fine")};
-    if(!n.biz || !n.deal || !n.contact){ document.getElementById(!n.biz?"nj-biz":!n.deal?"nj-deal":"nj-contact").focus(); return; }
-    state.pending.push({pid:"p"+Date.now(), type:"new", ts:Date.now(), proposed:n}); save(); render();
-    toast("Thanks! The program will review your deal. You’ll get a sign-in link once it’s approved."); return;
+  if(a==="biz-setup-send"){
+    const o = state.added.find(x=>x.id===ui.biz); const g = id=>clean(document.getElementById(id).value);
+    const deal = g("sd-deal"); if(!deal){ document.getElementById("sd-deal").focus(); return; }
+    Object.assign(o,{deal, limit:document.getElementById("sd-limit").value, fine:g("sd-fine")||"See store for details.", addr:g("sd-addr")||o.addr, status:"submitted", submitted:Date.now()});
+    save(); render(); window.scrollTo(0,0); return;
   }
   if(a==="adm-approve" || a==="adm-decline"){
     const p = state.pending.find(x=>x.pid===t.dataset.pid); if(!p) return;
     state.pending = state.pending.filter(x=>x!==p);
-    if(a==="adm-approve"){
-      if(p.type==="change") state.edits[p.offerId] = Object.assign({}, state.edits[p.offerId], {deal:p.proposed.deal, limit:p.proposed.limit});
-      else { const n = p.proposed; state.added.push({id:"n"+Date.now(), biz:n.biz, deal:n.deal, cat:n.cat, limit:n.limit, value:5, color:NEW_COLORS[state.added.length%NEW_COLORS.length], fine:n.fine||"See store for details.", addr:n.addr}); }
-    }
+    if(a==="adm-approve") state.edits[p.offerId] = Object.assign({}, state.edits[p.offerId], {deal:p.proposed.deal, limit:p.proposed.limit});
     save(); render(); return;
   }
-  if(a==="adm-open"){ ui.biz = t.dataset.id; return; }
+  if(a==="adm-new-approve" || a==="adm-new-decline"){
+    const o = state.added.find(x=>x.id===t.dataset.id);
+    if(a==="adm-new-approve") o.status = "live"; else { o.status = "invited"; o.invited = Date.now(); }
+    save(); render(); return;
+  }
+  if(a==="adm-add-biz"){ sheetAddBiz(); return; }
+  if(a==="adm-add-biz-save"){
+    const g = id=>clean(document.getElementById(id).value);
+    const f = document.getElementById("ab-file").files[0];
+    const o = {id:"n"+Date.now(), biz:g("ab-biz"), cat:document.getElementById("ab-cat").value, addr:g("ab-addr"), owner:g("ab-owner"), contact:g("ab-contact"),
+      color:NEW_COLORS[state.added.length%NEW_COLORS.length], value:5, status:"invited", invited:Date.now(),
+      contract:{level:document.getElementById("ab-level").value, ends:document.getElementById("ab-ends").value||"2027-08-31", file:f?clean(f.name):"Agreement (no file attached)"}};
+    if(!o.biz || !o.contact){ document.getElementById(!o.biz?"ab-biz":"ab-contact").focus(); return; }
+    state.added.push(o); save(); render(); toast(`${o.biz} added. We sent ${esc(o.owner||"the owner")} a link to set up their deal.`); return;
+  }
+  if(a==="adm-biz"){ sheetAdmBiz(t.dataset.id); return; }
+  if(a==="adm-resend"){ toast("Deal form sent again."); return; }
+  if(a==="adm-open"){ ui.biz = t.dataset.id; closeSheet(); return; }
+  if(a==="adm-holder"){ sheetHolder(t.dataset.pass); return; }
+  if(a==="ho-back"){ sheetHolder(ui.holder); return; }
+  if(a==="ho-save"){
+    const h = findHolder(ui.holder); const g = id=>clean(document.getElementById(id).value);
+    const nv = {name:g("ho-name")||h.name, email:g("ho-email")||h.email, team:document.getElementById("ho-team").value};
+    const changed = Object.keys(nv).filter(k=>nv[k]!==h[k]);
+    if(!changed.length){ sheetHolder(ui.holder,"Nothing changed."); return; }
+    const target = h.self ? state : state.holders.find(x=>x.passNo===h.passNo);
+    changed.forEach(k=>target[k]=nv[k]);
+    holderLog(h, `Updated ${changed.map(k=>k==="team"?"player credited":k).join(", ")}`);
+    save(); render(); sheetHolder(ui.holder,"Account updated."); return;
+  }
+  if(a==="ho-rm-member"){
+    const h = findHolder(ui.holder); const nm = h.member.name;
+    if(h.self) state.member = null; else state.holders.find(x=>x.passNo===h.passNo).member = null;
+    holderLog(h, `Removed household member ${nm}`); save(); render(); sheetHolder(ui.holder, `${esc(nm)} removed.`); return;
+  }
+  if(a==="ho-restore-change"){ state.changesUsed = 0; holderLog(findHolder(ui.holder),"Gave back household change"); save(); render(); sheetHolder(ui.holder,"They can change their household member again."); return; }
+  if(a==="ho-undo"){ sheetUndo(+t.dataset.i); return; }
+  if(a==="undo-reason"){ ui.undoReason = t.dataset.r; document.querySelectorAll('[data-action="undo-reason"]').forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
+  if(a==="ho-undo-confirm"){
+    const h = findHolder(ui.holder); const i = +t.dataset.i; const r = h.redemptions[i]; const o = ALLBIZ.find(x=>x.id===r.offerId);
+    h.redemptions.splice(i,1);
+    holderLog(h, `Undid ${o.biz} (${fmtDay(new Date(r.ts))}): ${ui.undoReason}`);
+    save(); render(); sheetHolder(ui.holder, `${o.biz} deal given back.`); return;
+  }
   if(a==="hh-add"){ sheetHousehold(); return; }
   if(a==="hh-send"){
     const n = document.getElementById("hn").value.trim(), c = document.getElementById("hc").value.trim();
