@@ -168,8 +168,8 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .rolebar{position:sticky;top:0;z-index:15;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .rolebar .wrap{display:flex;align-items:center;gap:10px;padding-top:8px;padding-bottom:8px}
 .rolebar .lbl{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);flex:none}
-.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--chip);border-radius:999px;padding:4px;flex:1}
-.seg a{text-align:center;text-decoration:none;color:var(--ink);font-weight:700;font-size:14px;padding:7px 4px;border-radius:999px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--chip);border-radius:999px;padding:4px;flex:1}
+.seg a{text-align:center;text-decoration:none;color:var(--ink);font-weight:700;font-size:13px;padding:7px 2px;border-radius:999px}
 .seg a[aria-current="page"]{background:var(--royal);color:var(--royal-ink)}
 
 /* Coach + business dashboards */
@@ -208,7 +208,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 const ORG = "DCS Tigers Football";
 const PRICE = 25;
 const TEAMS = ["Tigers Football team fund","Sample Player #7","Sample Player #12","Sample Player #22","Sample Player #54"];
-const OFFERS = [
+const BASE_OFFERS = [
   {id:"marios",biz:"Mario’s Brick Oven",deal:"$5 off any large pizza",cat:"Food",limit:"monthly",value:5,color:"#C2410C",fine:"Dine-in or pickup. Can’t be combined with other offers.",addr:"214 Main St"},
   {id:"sunrise",biz:"Sunrise Coffee Co.",deal:"Free pastry with any drink",cat:"Food",limit:"monthly",value:4,color:"#7C4A2D",fine:"One pastry per visit. Any size drink.",addr:"9 Depot Square"},
   {id:"elsol",biz:"Taqueria El Sol",deal:"Free chips & queso with any entrée",cat:"Food",limit:"unlimited",value:6,color:"#B91C1C",fine:"Dine-in only.",addr:"77 River Rd"},
@@ -222,6 +222,20 @@ const OFFERS = [
   {id:"cuts",biz:"Fresh Cuts Barbershop",deal:"$5 off any haircut",cat:"Services",limit:"monthly",value:5,color:"#334155",fine:"Walk-ins and appointments.",addr:"31 Oak St"}
 ];
 const LIMIT = {once:"One time",monthly:"Once a month",unlimited:"Every visit"};
+const GENEROSITY = {once:0,monthly:1,unlimited:2};
+const NEW_COLORS = ["#0F766E","#A16207","#7E22CE","#BE123C","#15803D","#1D4ED8"];
+const SEED_PENDING = [
+  {pid:"p1",type:"change",offerId:"bowl",ts:Date.now()-5*3600e3,proposed:{deal:"Free shoe rental for up to 2",limit:"monthly"}},
+  {pid:"p2",type:"new",ts:Date.now()-26*3600e3,proposed:{biz:"Prairie Rose Bakery",cat:"Food",addr:"712 Chief St",contact:"owner@prairierose.example",deal:"Free cookie with any coffee",limit:"monthly",fine:"One cookie per visit."}}
+];
+let OFFERS = [];
+function rebuildOffers(){
+  const added = (state.added||[]);
+  const today = new Date().toISOString().slice(0,10);
+  OFFERS = [...BASE_OFFERS, ...added].map(o=>{ const x = Object.assign({}, o, (state.edits||{})[o.id]||{}); if(x.paused && x.paused<=today) x.paused = null; return x; });
+  if(!OFFERS.find(o=>o.id===ui.biz)) ui.biz = OFFERS[0].id;
+}
+function clean(v){ return String(v||"").replace(/[<>]/g,"").trim(); }
 const CATS = ["All","Food","Fun","Shopping","Services"];
 const KEY = "hometown-pass-demo";
 
@@ -231,7 +245,7 @@ const SALES = {"Tigers Football team fund":14,"Sample Player #7":23,"Sample Play
 const BIZSTATS = {marios:[19,71],sunrise:[24,88],elsol:[31,102],scoops:[12,40],bowl:[8,27],cinema:[15,49],shack:[6,21],hardware:[9,30],bloom:[4,13],wash:[7,26],cuts:[11,38]};
 
 let state = load();
-let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0], biz:OFFERS[0].id, fromLink:false};
+let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0], biz:BASE_OFFERS[0].id, fromLink:false};
 (function(){
   const p = new URLSearchParams(location.search).get("player");
   if(!p) return;
@@ -239,18 +253,21 @@ let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0], biz:OFFERS[0].id, fromLin
   if(t){ ui.team = t; ui.fromLink = true; }
 })();
 let clockTimer = null;
+rebuildOffers();
 
 function load(){
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:[],pending:JSON.parse(JSON.stringify(SEED_PENDING))});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:[],pending:JSON.parse(JSON.stringify(SEED_PENDING))};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function initials(b){ return b.replace(/^The /,"").split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
 function fmtDay(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
 function logo(o){ return `<span class="logo" style="background:${o.color}" aria-hidden="true">${initials(o.biz)}</span>`; }
 
 function status(o){
+  if(o.paused) return {ok:false, paused:true, msg:`Paused by ${o.biz} until ${fmtDay(new Date(o.paused+"T12:00"))}.`, short:"Paused"};
   if(!state.purchased) return {ok:false, locked:true};
   const mine = state.redemptions.filter(r=>r.offerId===o.id);
   if(o.limit==="once" && mine.length){
@@ -381,7 +398,7 @@ function offerRows(){
   if(!items.length) return `<div class="empty">No offers match “${esc(ui.q)}”. Try another word or category.</div>`;
   return items.map(o=>{
     const s = status(o);
-    const tag = s.locked ? `<span class="tag">${LIMIT[o.limit]}</span>`
+    const tag = s.paused ? `<span class="tag used">Paused</span>` : s.locked ? `<span class="tag">${LIMIT[o.limit]}</span>`
       : s.ok ? `<span class="tag">${LIMIT[o.limit]}</span>`
       : `<span class="tag used">${s.short || "Used"}</span>`;
     return `<button class="row" data-action="offer" data-id="${o.id}">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div></div>${tag}</button>`;
@@ -390,10 +407,10 @@ function offerRows(){
 
 /* ---------- Demo role switcher ---------- */
 function roleBar(){
-  const r = ui.view==="coach" ? "coach" : ui.view==="biz" ? "biz" : "fan";
+  const r = ["coach","biz","admin"].includes(ui.view) ? ui.view : "fan";
   const a = (id,href,label)=>`<a href="${href}"${r===id?' aria-current="page"':""}>${label}</a>`;
   return `<div class="rolebar"><div class="wrap"><span class="lbl">Demo</span><nav class="seg" aria-label="View the app as">
-    ${a("fan", state.purchased?"#offers":"#pass","Fan")}${a("coach","#coach","Coach")}${a("biz","#biz","Business")}</nav></div></div>`;
+    ${a("fan", state.purchased?"#offers":"#pass","Fan")}${a("coach","#coach","Coach")}${a("biz","#biz","Business")}${a("admin","#admin","Admin")}</nav></div></div>`;
 }
 
 /* ---------- Coach dashboard ---------- */
@@ -446,7 +463,7 @@ function viewCoach(){
 function viewBiz(){
   const o = OFFERS.find(x=>x.id===ui.biz);
   const mine = state.redemptions.filter(r=>r.offerId===o.id).length;
-  const [month,total] = BIZSTATS[o.id]; const m = month+mine, t = total+mine;
+  const [month,total] = BIZSTATS[o.id]||[0,0]; const m = month+mine, t = total+mine;
   const now = Date.now();
   const recent = [
     ...state.redemptions.filter(r=>r.offerId===o.id).map(r=>({ts:r.ts,pass:state.passNo})).reverse(),
@@ -457,6 +474,11 @@ function viewBiz(){
     <label class="f" for="bizpick">Viewing as</label>
     <select class="field" id="bizpick">${OFFERS.map(x=>`<option value="${x.id}"${x.id===o.id?" selected":""}>${x.biz}</option>`).join("")}</select>
     <div class="biz-head">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Your deal: ${o.deal}</div></div></div>
+    ${bizStatusBox(o)}
+    <div class="row2" style="margin-top:12px">
+      <button class="btn" data-action="biz-edit">Edit deal</button>
+      ${o.paused ? `<button class="btn ghost" data-action="biz-resume">Resume deal</button>` : `<button class="btn ghost" data-action="biz-pause">Pause deal</button>`}
+    </div>
     <div class="stats" style="margin-top:14px">
       <div class="stat"><b>${m}</b><span class="small">Visits this month</span></div>
       <div class="stat"><b>${t}</b><span class="small">Visits this season</span></div>
@@ -472,7 +494,91 @@ function viewBiz(){
     <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${o.fine}</dd><dt>Runs</dt><dd>Through Aug 31, 2027</dd></dl>
     <p class="small">The app enforces the limit automatically, so a once-a-month deal can’t be used twice in a month. A pass can include one household member, and the limit is shared, so a couple gets one deal per month, not two.</p>
     ${partners()}
-    <p class="small" style="margin-top:28px">Demo numbers. No sign-up or equipment needed for businesses.</p>
+    <div class="goal" style="margin-top:28px"><strong>Not on the pass yet?</strong>
+      <p class="small" style="margin:6px 0 12px">Local businesses can sign up in two minutes. Your deal goes live once the program approves it.</p>
+      <button class="btn ghost" data-action="biz-join">Add your business</button></div>
+    <p class="small" style="margin-top:20px">Business owners sign in with a link sent to their email or phone, with no password, and only see their own business. Demo numbers.</p>
+  </div>`;
+}
+
+/* ---------- Business editing ---------- */
+function pendingFor(id){ return state.pending.find(p=>p.type==="change" && p.offerId===id); }
+function bizStatusBox(o){
+  const p = pendingFor(o.id);
+  let out = "";
+  if(o.paused) out += `<div class="supporting" style="margin-top:12px">⏸ Paused until ${fmtDay(new Date(o.paused+"T12:00"))}. Pass holders see it as paused.</div>`;
+  if(p) out += `<div class="goal" style="margin-top:12px"><strong>Change awaiting approval</strong>
+      <p class="small" style="margin:6px 0 4px">${esc(p.proposed.deal)} · ${LIMIT[p.proposed.limit]}</p>
+      <p class="small" style="margin:0 0 6px">Pass holders keep seeing your current deal until it’s approved.</p>
+      <button class="linkbtn" data-action="biz-cancel" data-pid="${p.pid}">Withdraw request</button></div>`;
+  return out;
+}
+function sheetBizEdit(){
+  const o = OFFERS.find(x=>x.id===ui.biz); const p = pendingFor(o.id);
+  const d = p ? p.proposed : o;
+  openSheet(`<h2 style="margin-top:0">Edit your deal</h2>
+    <p class="small">Fine print and address update right away. Changing the deal itself goes to the program for approval, because pass holders bought the pass expecting it. Making it available more often updates right away.</p>
+    <label class="f" for="ed-deal">The deal</label><input class="field" id="ed-deal" value="${esc(d.deal)}">
+    <label class="f" for="ed-limit">How often</label>
+    <select class="field" id="ed-limit">${Object.entries(LIMIT).map(([k,v])=>`<option value="${k}"${k===d.limit?" selected":""}>${v}</option>`).join("")}</select>
+    <label class="f" for="ed-fine">Fine print</label><textarea class="field" id="ed-fine" rows="3">${esc(o.fine)}</textarea>
+    <label class="f" for="ed-addr">Address</label><input class="field" id="ed-addr" value="${esc(o.addr)}">
+    <button class="btn" data-action="biz-save">Save changes</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function sheetBizPause(){
+  const d = new Date(Date.now()+7*86400e3).toISOString().slice(0,10);
+  const min = new Date(Date.now()+86400e3).toISOString().slice(0,10);
+  const max = "2027-08-31";
+  openSheet(`<h2 style="margin-top:0">Pause your deal</h2>
+    <p class="small">Closed for a holiday or remodel? Pass holders will see the deal as paused, and it turns back on by itself.</p>
+    <label class="f" for="pz">Turn back on</label><input class="field" id="pz" type="date" value="${d}" min="${min}" max="${max}">
+    <button class="btn" data-action="biz-pause-save">Pause deal</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function sheetBizJoin(){
+  openSheet(`<h2 style="margin-top:0">Add your business</h2>
+    <p class="small">Your deal goes live on the pass once the program approves it.</p>
+    <label class="f" for="nj-biz">Business name</label><input class="field" id="nj-biz" value="Benkelman Flower Shop">
+    <label class="f" for="nj-cat">Category</label><select class="field" id="nj-cat">${CATS.slice(1).map(c=>`<option${c==="Shopping"?" selected":""}>${c}</option>`).join("")}</select>
+    <label class="f" for="nj-addr">Address</label><input class="field" id="nj-addr" value="505 Chief St">
+    <label class="f" for="nj-contact">Your email or mobile</label><input class="field" id="nj-contact" value="hello@benkelmanflowers.example">
+    <label class="f" for="nj-deal">Your deal</label><input class="field" id="nj-deal" value="15% off any bouquet">
+    <label class="f" for="nj-limit">How often</label><select class="field" id="nj-limit">${Object.entries(LIMIT).map(([k,v])=>`<option value="${k}"${k==="monthly"?" selected":""}>${v}</option>`).join("")}</select>
+    <label class="f" for="nj-fine">Fine print</label><textarea class="field" id="nj-fine" rows="2">In-store only.</textarea>
+    <button class="btn" data-action="biz-join-send">Submit for approval</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function toast(msg){
+  openSheet(`<div style="text-align:center"><div class="ok"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+    <p style="font-weight:700">${msg}</p><button class="btn" data-action="close">OK</button></div>`);
+}
+
+/* ---------- Admin ---------- */
+function viewAdmin(){
+  const pend = state.pending;
+  const paused = OFFERS.filter(o=>o.paused);
+  return `<div class="wrap">${header}
+    <p class="kicker">Admin</p>
+    <h2 style="margin-top:0">Approvals${pend.length?` (${pend.length})`:""}</h2>
+    ${pend.length ? pend.map(p=>{
+      if(p.type==="change"){ const o = OFFERS.find(x=>x.id===p.offerId);
+        return `<div class="goal"><span class="tag">Deal change</span>
+          <div class="biz-head" style="margin:10px 0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Requested ${fmtDay(new Date(p.ts))}</div></div></div>
+          <dl class="meta" style="margin:0 0 14px"><dt>Now</dt><dd>${o.deal} · ${LIMIT[o.limit]}</dd><dt>Wants</dt><dd><strong>${esc(p.proposed.deal)} · ${LIMIT[p.proposed.limit]}</strong></dd></dl>
+          <div class="row2"><button class="btn ghost" data-action="adm-decline" data-pid="${p.pid}">Decline</button><button class="btn" data-action="adm-approve" data-pid="${p.pid}">Approve</button></div></div>`;
+      }
+      const n = p.proposed;
+      return `<div class="goal"><span class="tag">New business</span>
+        <div class="biz-head" style="margin:10px 0">${logo({biz:n.biz,color:"#6E5D59"})}<div><div style="font-weight:700">${esc(n.biz)}</div><div class="small">${esc(n.cat)} · ${esc(n.addr)}</div></div></div>
+        <dl class="meta" style="margin:0 0 14px"><dt>Deal</dt><dd><strong>${esc(n.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[n.limit]}</dd><dt>Details</dt><dd>${esc(n.fine)}</dd><dt>Contact</dt><dd>${esc(n.contact)}</dd></dl>
+        <div class="row2"><button class="btn ghost" data-action="adm-decline" data-pid="${p.pid}">Decline</button><button class="btn" data-action="adm-approve" data-pid="${p.pid}">Approve</button></div></div>`;
+    }).join("") : `<div class="list"><div class="empty">You’re all caught up. New requests from businesses show up here.</div></div>`}
+    <h3>Businesses on the pass (${OFFERS.length})</h3>
+    <div class="list">${OFFERS.map(o=>`<a class="row" href="#biz" data-action="adm-open" data-id="${o.id}" style="text-decoration:none;color:inherit">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div></div>
+      <span class="tag${o.paused?" used":""}">${o.paused?"Paused":pendingFor(o.id)?"Change pending":"Live"}</span></a>`).join("")}</div>
+    <p class="small" style="margin-top:12px">${paused.length} paused. Only you and the coaches can approve deal changes and new businesses.</p>
+    ${partners()}
   </div>`;
 }
 
@@ -545,7 +651,8 @@ function sheetSuccess(){
 function sheetOffer(id){
   const o = OFFERS.find(x=>x.id===id); const s = status(o);
   let cta;
-  if(s.locked) cta = `<a class="btn" href="#pass" data-action="close">Get a pass to redeem</a>`;
+  if(s.paused) cta = `<p class="notice">${s.msg}</p><button class="btn" disabled>Redeem in store</button>`;
+  else if(s.locked) cta = `<a class="btn" href="#pass" data-action="close">Get a pass to redeem</a>`;
   else if(!s.ok) cta = `<p class="notice">${s.msg}</p><button class="btn" disabled>Redeem in store</button>`;
   else cta = `<button class="btn" data-action="redeem-start" data-id="${o.id}">Redeem in store</button>`;
   openSheet(`${logo(o)}
@@ -597,14 +704,14 @@ function showRedeemed(id, sample){
 /* ---------- Routing & events ---------- */
 function route(){
   const h = location.hash.slice(1);
-  ui.view = ["offers","pass","coach","biz"].includes(h) ? h : (state.purchased ? "offers" : "pass");
+  ui.view = ["offers","pass","coach","biz","admin"].includes(h) ? h : (state.purchased ? "offers" : "pass");
   render();
 }
 function render(){
   const app = document.getElementById("app");
-  const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : (state.purchased ? viewPass() : viewBuy());
+  const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : ui.view==="admin" ? viewAdmin() : (state.purchased ? viewPass() : viewBuy());
   app.innerHTML = roleBar() + body;
-  document.querySelector(".tabs").hidden = (ui.view==="coach" || ui.view==="biz");
+  document.querySelector(".tabs").hidden = ["coach","biz","admin"].includes(ui.view);
   const bp = document.getElementById("bizpick");
   if(bp) bp.addEventListener("change", e=>{ ui.biz=e.target.value; render(); });
   document.getElementById("tab-offers").setAttribute("aria-current", ui.view==="offers"?"page":"false");
@@ -642,6 +749,45 @@ document.addEventListener("click", e=>{
     state.redemptions.push({offerId:t.dataset.id, ts:Date.now(), by}); save();
     showRedeemed(t.dataset.id);
   }
+  if(a==="biz-edit"){ sheetBizEdit(); return; }
+  if(a==="biz-save"){
+    const o = OFFERS.find(x=>x.id===ui.biz);
+    const deal = clean(document.getElementById("ed-deal").value), limit = document.getElementById("ed-limit").value;
+    const fine = clean(document.getElementById("ed-fine").value), addr = clean(document.getElementById("ed-addr").value);
+    if(!deal){ document.getElementById("ed-deal").focus(); return; }
+    const e = state.edits[o.id] = Object.assign({}, state.edits[o.id], {fine, addr});
+    const base = {deal:o.deal, limit:o.limit};
+    state.pending = state.pending.filter(p=>!(p.type==="change" && p.offerId===o.id));
+    let msg = "Saved. Your changes are live.";
+    if(deal===base.deal && limit!==base.limit && GENEROSITY[limit]>GENEROSITY[base.limit]){ e.limit = limit; msg = "Saved. Your deal is now available more often."; }
+    else if(deal!==base.deal || limit!==base.limit){ state.pending.push({pid:"p"+Date.now(), type:"change", offerId:o.id, ts:Date.now(), proposed:{deal,limit}}); msg = "Sent for approval. Your current deal stays up until it’s approved."; }
+    save(); render(); toast(msg); return;
+  }
+  if(a==="biz-cancel"){ state.pending = state.pending.filter(p=>p.pid!==t.dataset.pid); save(); render(); return; }
+  if(a==="biz-pause"){ sheetBizPause(); return; }
+  if(a==="biz-pause-save"){
+    const v = document.getElementById("pz").value; if(!v) return;
+    state.edits[ui.biz] = Object.assign({}, state.edits[ui.biz], {paused:v}); save(); render(); toast(`Paused until ${fmtDay(new Date(v+"T12:00"))}.`); return;
+  }
+  if(a==="biz-resume"){ state.edits[ui.biz] = Object.assign({}, state.edits[ui.biz], {paused:null}); save(); render(); return; }
+  if(a==="biz-join"){ sheetBizJoin(); return; }
+  if(a==="biz-join-send"){
+    const g = id=>clean(document.getElementById(id).value);
+    const n = {biz:g("nj-biz"),cat:document.getElementById("nj-cat").value,addr:g("nj-addr"),contact:g("nj-contact"),deal:g("nj-deal"),limit:document.getElementById("nj-limit").value,fine:g("nj-fine")};
+    if(!n.biz || !n.deal || !n.contact){ document.getElementById(!n.biz?"nj-biz":!n.deal?"nj-deal":"nj-contact").focus(); return; }
+    state.pending.push({pid:"p"+Date.now(), type:"new", ts:Date.now(), proposed:n}); save(); render();
+    toast("Thanks! The program will review your deal. You’ll get a sign-in link once it’s approved."); return;
+  }
+  if(a==="adm-approve" || a==="adm-decline"){
+    const p = state.pending.find(x=>x.pid===t.dataset.pid); if(!p) return;
+    state.pending = state.pending.filter(x=>x!==p);
+    if(a==="adm-approve"){
+      if(p.type==="change") state.edits[p.offerId] = Object.assign({}, state.edits[p.offerId], {deal:p.proposed.deal, limit:p.proposed.limit});
+      else { const n = p.proposed; state.added.push({id:"n"+Date.now(), biz:n.biz, deal:n.deal, cat:n.cat, limit:n.limit, value:5, color:NEW_COLORS[state.added.length%NEW_COLORS.length], fine:n.fine||"See store for details.", addr:n.addr}); }
+    }
+    save(); render(); return;
+  }
+  if(a==="adm-open"){ ui.biz = t.dataset.id; return; }
   if(a==="hh-add"){ sheetHousehold(); return; }
   if(a==="hh-send"){
     const n = document.getElementById("hn").value.trim(), c = document.getElementById("hc").value.trim();
@@ -666,7 +812,7 @@ document.addEventListener("click", e=>{
     return;
   }
   if(a==="done"){ clearInterval(clockTimer); document.getElementById("layer").innerHTML=""; render(); }
-  if(a==="reset"){ state = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0}; state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
+  if(a==="reset"){ state = load.blank(); state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".scrim")) closeSheet(); });
 window.addEventListener("hashchange", ()=>{ route(); window.scrollTo(0,0); });
