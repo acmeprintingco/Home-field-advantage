@@ -241,7 +241,7 @@ let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0], biz:OFFERS[0].id, fromLin
 let clockTimer = null;
 
 function load(){
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[]};
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -274,7 +274,7 @@ function passCard(sample){
   return `<div class="pass${sample?" sample":""}" role="img" aria-label="${sample?"Sample pass":"Advantage Pass number "+num+" for "+name}">
     <div class="pass-top"><span>Advantage Pass</span><span>2026–27</span></div>
     <div class="pass-num"><span class="no">No.</span>${num}</div>
-    <div class="pass-who"><strong>${name}</strong><span>${team}</span></div>
+    <div class="pass-who"><strong>${name}${!sample&&state.member&&state.member.status==="active"?` + ${esc(state.member.name.split(" ")[0])}`:""}</strong><span>${team}</span></div>
     <div class="pass-by">Presented by <span>Your logo here</span></div>
   </div>`;
 }
@@ -354,9 +354,10 @@ function viewPass(){
       <div class="stat"><b>${state.redemptions.length}</b><span class="small">Deals redeemed</span></div>
     </div>
     <p class="small" style="margin-top:14px">Your $${PRICE} went to ${esc(state.team)}. Pass good through Aug 31, 2027.</p>
+    ${householdCard()}
     <h3>Redemption history</h3>
     ${hist.length ? `<div class="list hist">${hist.map(r=>{const o=OFFERS.find(x=>x.id===r.offerId); const d=new Date(r.ts);
-      return `<div class="row">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>`
+      return `<div class="row">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}${r.by?` · ${esc(r.by.split(" ")[0])}`:""}</div></div></div>`;}).join("")}</div>`
       : `<div class="list"><div class="empty">No deals redeemed yet.<br><a class="linkbtn" href="#offers">Browse offers</a></div></div>`}
     ${partners()}
     <p style="margin-top:28px;display:flex;gap:20px"><button class="linkbtn" data-action="tour">Take the quick tour</button><button class="linkbtn" data-action="reset">Reset demo</button></p>
@@ -469,10 +470,49 @@ function viewBiz(){
       return `<div class="row">${logo(o)}<div><div class="deal">Pass No. ${r.pass}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>
     <h3>Deal rules</h3>
     <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${o.fine}</dd><dt>Runs</dt><dd>Through Aug 31, 2027</dd></dl>
-    <p class="small">The app enforces the limit automatically, so a once-a-month deal can’t be used twice in a month.</p>
+    <p class="small">The app enforces the limit automatically, so a once-a-month deal can’t be used twice in a month. A pass can include one household member, and the limit is shared, so a couple gets one deal per month, not two.</p>
     ${partners()}
     <p class="small" style="margin-top:28px">Demo numbers. No sign-up or equipment needed for businesses.</p>
   </div>`;
+}
+
+/* ---------- Household member ---------- */
+const MAX_CHANGES = 1;
+function householdCard(){
+  const m = state.member;
+  const rules = `<p class="small" style="margin:10px 0 0">One household member per pass. Deal limits are shared, and you can change this person once per season.</p>`;
+  if(!m){
+    return `<h3>Household</h3><div class="goal">
+      <strong>Add your spouse or partner</strong>
+      <p class="small" style="margin:6px 0 12px">They get the pass on their own phone, so they can redeem deals without you there.</p>
+      <button class="btn" data-action="hh-add">Add household member</button>
+      ${rules}</div>`;
+  }
+  if(m.status==="invited"){
+    return `<h3>Household</h3><div class="goal">
+      <strong>Invite sent to ${esc(m.name)}</strong>
+      <p class="small" style="margin:6px 0 12px">We texted a link to ${esc(m.contact)}. It works once, on one phone, and expires in 48 hours.</p>
+      <button class="btn ghost" data-action="hh-accept">Demo: accept as ${esc(m.name.split(" ")[0])}</button>
+      <button class="linkbtn" data-action="hh-remove" style="display:block;margin:10px auto 0">Cancel invite</button>
+      ${rules}</div>`;
+  }
+  const canChange = state.changesUsed < MAX_CHANGES;
+  return `<h3>Household</h3><div class="list"><div class="row" style="cursor:default;grid-template-columns:46px 1fr auto">
+      <span class="logo" style="background:var(--royal)" aria-hidden="true">${initials(m.name)}</span>
+      <div><div class="deal">${esc(m.name)}</div><div class="small">Active on their phone since ${fmtDay(new Date(m.ts))}</div></div>
+      <span class="tag">Household</span></div></div>
+    ${canChange ? `<button class="linkbtn" data-action="hh-remove">Remove ${esc(m.name.split(" ")[0])}</button>` : `<p class="small" style="margin-top:10px">You’ve used your one change for this season.</p>`}
+    ${rules}`;
+}
+function sheetHousehold(){
+  openSheet(`<h2 style="margin-top:0">Add a household member</h2>
+    <p class="small">Add one spouse or partner who lives with you. They’ll get their own sign-in, and your deal limits are shared.</p>
+    <label class="f" for="hn">Their full name</label><input class="field" id="hn" autocomplete="off" value="Sam Ellis">
+    <label class="f" for="hc">Their mobile number</label><input class="field" id="hc" type="tel" inputmode="tel" value="(308) 555-0142">
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:0 0 16px;font-size:15px"><input type="checkbox" id="hok" style="margin-top:4px;width:20px;height:20px">
+      <span>This person is my spouse or partner and lives at my address. I understand I can change this once per season.</span></label>
+    <button class="btn" data-action="hh-send">Send invite</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
 }
 
 /* ---------- Sheets ---------- */
@@ -518,16 +558,23 @@ function sheetOffer(id){
 
 function sheetConfirm(id){
   const o = OFFERS.find(x=>x.id===id);
-  const use = o.limit==="once" ? "This uses your one-time deal." : o.limit==="monthly" ? "This uses this month’s deal." : "You can use this deal every visit.";
+  let use = o.limit==="once" ? "This uses your one-time deal." : o.limit==="monthly" ? "This uses this month’s deal." : "You can use this deal every visit.";
+  const m = state.member && state.member.status==="active" ? state.member : null;
+  if(m && o.limit!=="unlimited") use = use.replace("your","your household’s").replace("this month’s deal","this month’s deal for your household");
   openSheet(`<h2 style="margin-top:0">Ready at the register?</h2>
     <p>Tap Redeem while the cashier at <strong>${o.biz}</strong> is watching. ${use}</p>
+    ${m ? `<label class="f">Who’s at the register?</label><div class="chips" role="radiogroup" aria-label="Who is redeeming">
+      <button class="chip" data-action="who" data-who="${esc(state.name)}" aria-pressed="${ui.who!==m.name}">${esc(state.name.split(" ")[0])}</button>
+      <button class="chip" data-action="who" data-who="${esc(m.name)}" aria-pressed="${ui.who===m.name}">${esc(m.name.split(" ")[0])}</button></div>` : ""}
     <div class="row2"><button class="btn ghost" data-action="close">Not yet</button><button class="btn" data-action="redeem-confirm" data-id="${o.id}">Redeem</button></div>`);
 }
 
 /* ---------- Redemption screen ---------- */
 function showRedeemed(id, sample){
   const o = OFFERS.find(x=>x.id===id);
-  const passLine = sample ? "Pass No. 214, Jordan Ellis" : `Pass No. ${state.passNo}, ${esc(state.name)}`;
+  const last = state.redemptions[state.redemptions.length-1];
+  const who = last && last.by ? last.by : state.name;
+  const passLine = sample ? "Pass No. 214, Jordan Ellis" : `Pass No. ${state.passNo}, ${esc(who)}${who!==state.name?` <span style="opacity:.8">(household)</span>`:""}`;
   closeSheet();
   const el = document.createElement("div");
   el.className = "redeem"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Deal redeemed");
@@ -591,9 +638,26 @@ document.addEventListener("click", e=>{
   if(a==="offer"){ sheetOffer(t.dataset.id); }
   if(a==="redeem-start"){ sheetConfirm(t.dataset.id); }
   if(a==="redeem-confirm"){
-    state.redemptions.push({offerId:t.dataset.id, ts:Date.now()}); save();
+    const m = state.member && state.member.status==="active"; const by = m && ui.who===state.member.name ? state.member.name : state.name;
+    state.redemptions.push({offerId:t.dataset.id, ts:Date.now(), by}); save();
     showRedeemed(t.dataset.id);
   }
+  if(a==="hh-add"){ sheetHousehold(); return; }
+  if(a==="hh-send"){
+    const n = document.getElementById("hn").value.trim(), c = document.getElementById("hc").value.trim();
+    if(!n || c.replace(/\D/g,"").length<10){ alert("Enter their name and a 10-digit mobile number."); return; }
+    if(!document.getElementById("hok").checked){ alert("Please confirm this person is your spouse or partner and lives at your address."); return; }
+    if(n.toLowerCase()===state.name.toLowerCase()){ alert("Add someone other than yourself."); return; }
+    state.member = {name:n, contact:c, status:"invited", ts:Date.now()}; save(); closeSheet(); render(); return;
+  }
+  if(a==="hh-accept"){ state.member.status="active"; state.member.ts=Date.now(); save(); render(); return; }
+  if(a==="hh-remove"){
+    const wasActive = state.member && state.member.status==="active";
+    if(wasActive && !confirm(`Remove ${state.member.name}? You can only change your household member once per season.`)) return;
+    if(wasActive) state.changesUsed++;
+    state.member = null; ui.who = null; save(); render(); return;
+  }
+  if(a==="who"){ ui.who = t.dataset.who; document.querySelectorAll('[data-action="who"]').forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
   if(a==="biz-preview"){ showRedeemed(t.dataset.id, true); return; }
   if(a==="copy"){
     const link = t.dataset.link;
@@ -602,7 +666,7 @@ document.addEventListener("click", e=>{
     return;
   }
   if(a==="done"){ clearInterval(clockTimer); document.getElementById("layer").innerHTML=""; render(); }
-  if(a==="reset"){ state = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[]}; state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
+  if(a==="reset"){ state = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0}; state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".scrim")) closeSheet(); });
 window.addEventListener("hashchange", ()=>{ route(); window.scrollTo(0,0); });
