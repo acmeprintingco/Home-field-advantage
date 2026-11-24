@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home Field Advantage – demo</title>
+<meta name="description" content="Home Field Advantage: a fundraising pass that saves you money at local businesses all season while backing your team.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#F4F7FD; --surface:#FFFFFF; --ink:#0B1530; --muted:#55607A; --line:#DFE6F3;
+  --royal:#1D4ED8; --royal-ink:#FFFFFF; --gold:#60A5FA; --gold-ink:#FFFFFF;
+  --chip:#E7EEFC; --warn:#9A5B00;
+  --display:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --body:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#070D1F; --surface:#0F1830; --ink:#EAF0FF; --muted:#9AA8C7; --line:#1E2A4A;
+    --royal:#4F8BFF; --royal-ink:#06102A; --gold:#7DB7FF; --chip:#16213F; --warn:#FFC86B;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#070D1F; --surface:#0F1830; --ink:#EAF0FF; --muted:#9AA8C7; --line:#1E2A4A;
+  --royal:#4F8BFF; --royal-ink:#06102A; --gold:#7DB7FF; --chip:#16213F; --warn:#FFC86B;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));-webkit-font-smoothing:antialiased}
+.wrap{max-width:520px;margin:0 auto;padding:0 20px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+
+.top{display:flex;align-items:center;gap:10px;padding:18px 0 4px;font-weight:700;font-size:15px}
+.top svg{flex:none}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,11vw,58px);line-height:1;margin:22px 0 14px;letter-spacing:-.04em}
+h2{font-family:var(--display);font-weight:800;font-size:30px;line-height:1.1;margin:28px 0 12px;letter-spacing:-.03em}
+h3{font-size:17px;margin:28px 0 10px}
+p{margin:0 0 14px}
+.lede{color:var(--muted);max-width:40ch}
+.small{font-size:14px;color:var(--muted)}
+
+/* The pass: the one bold element */
+.pass{position:relative;color:#fff;border-radius:26px;padding:20px 24px 22px;overflow:hidden;margin:22px 0;
+  background:radial-gradient(circle at 88% 12%,rgba(147,197,253,.6),transparent 42%),linear-gradient(135deg,#0A2370 0%,#1D4ED8 55%,#3B82F6 100%);
+  box-shadow:0 24px 48px -22px rgba(29,78,216,.7)}
+.pass::after{content:"";position:absolute;right:-70px;bottom:-90px;width:230px;height:230px;border-radius:50%;
+  border:30px solid rgba(255,255,255,.09)}
+.pass-top{display:flex;justify-content:space-between;font-weight:700;font-size:14px;padding-right:76px}
+.pass-num{font-family:var(--display);font-weight:800;font-size:clamp(84px,26vw,120px);line-height:.9;letter-spacing:-.05em;margin:16px 0 12px;position:relative;z-index:1}
+.pass-num .no{font-size:.26em;vertical-align:top;margin-right:4px;display:inline-block;padding-top:.3em}
+.pass-who{display:flex;flex-direction:column;padding-right:76px}
+.pass-who strong{font-size:19px}
+.pass-who span{font-size:14px}
+.pass.sample .pass-num{opacity:.35}
+.pass-by{position:relative;z-index:1;display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.28);font-size:13px}
+.pass-by span{border:1.5px dashed rgba(255,255,255,.65);border-radius:8px;padding:4px 10px;font-weight:700}
+.partners{margin:36px 0 8px;text-align:center}
+.partners .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 10px}
+.slot{border:1.5px dashed var(--line);border-radius:16px;display:grid;place-items:center;color:var(--muted);font-weight:700;font-size:14px;background:var(--surface)}
+.slot.big{height:76px;margin-bottom:18px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.slots .slot{height:54px;font-size:12px;padding:0 6px;text-align:center}
+
+.price{display:flex;align-items:baseline;gap:10px;margin:4px 0 16px}
+.price b{font-family:var(--display);font-weight:800;font-size:52px;line-height:1;letter-spacing:-.04em}
+label.f{display:block;font-weight:700;font-size:15px;margin:0 0 6px}
+.field{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:14px}
+.field:focus{border-color:var(--royal);outline:none}
+.btn{display:block;width:100%;background:var(--royal);color:var(--royal-ink);border:0;border-radius:999px;padding:16px;font-weight:700;font-size:17px;box-shadow:0 10px 24px -12px rgba(29,78,216,.8);cursor:pointer;text-align:center;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.linkbtn{background:none;border:0;color:var(--royal);font-weight:700;padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+ol.steps{list-style:none;counter-reset:s;padding:0;margin:0}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;gap:12px;padding:10px 0;align-items:start}
+ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;background:var(--chip);color:var(--royal)}
+.bizwrap{display:flex;flex-wrap:wrap;gap:8px}
+.bizwrap span{background:var(--chip);padding:6px 12px;border-radius:999px;font-size:14px}
+
+/* Offers */
+.search{margin:4px 0 12px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin:0 -2px}
+.chip{flex:none;border:0;background:var(--chip);border-radius:999px;padding:8px 16px;font-weight:700;font-size:15px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--royal);color:var(--royal-ink)}
+.banner{background:var(--surface);border:1.5px dashed var(--royal);border-radius:14px;padding:14px 16px;margin:6px 0 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.banner .btn{width:auto;padding:10px 16px;font-size:15px;flex:none}
+.list{background:var(--surface);border-radius:22px;border:1px solid var(--line);overflow:hidden}
+.row{display:grid;grid-template-columns:46px 1fr auto;gap:14px;align-items:center;padding:14px 16px;width:100%;background:none;border:0;border-top:1px solid var(--line);text-align:left;cursor:pointer}
+.row:first-child{border-top:0}
+.row:hover{background:color-mix(in srgb,var(--chip) 50%,transparent)}
+.logo{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:16px}
+.row .biz{font-size:14px;color:var(--muted)}
+.row .deal{font-weight:700;line-height:1.3}
+.tag{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--chip);white-space:nowrap}
+.tag.used{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+
+/* Pass page */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 18px}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:36px;line-height:1.05;letter-spacing:-.04em;color:var(--royal)}
+.hist .row{cursor:default;grid-template-columns:46px 1fr}
+.hist .row:hover{background:none}
+
+/* Tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr}
+.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0 12px;color:var(--muted);text-decoration:none;font-weight:700;font-size:13px}
+.tabs a[aria-current="page"]{color:var(--royal)}
+
+/* Sheet */
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(8,10,20,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom,0px));max-height:92vh;overflow:auto;animation:up .22s ease-out}
+.grab{width:44px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 14px}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.sheet .logo{width:58px;height:58px;font-size:20px}
+.sheet .bigdeal{font-family:var(--display);font-weight:800;font-size:32px;line-height:1.1;letter-spacing:-.03em;margin:14px 0 10px}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px;margin:14px 0 20px}
+.meta dt{color:var(--muted)}
+.meta dd{margin:0}
+.notice{color:var(--warn);font-weight:700;font-size:15px;margin:-6px 0 14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.test{font-size:13px;background:var(--chip);border-radius:8px;padding:8px 12px;margin:0 0 14px}
+.ok{width:72px;height:72px;border-radius:50%;background:#1D4ED8;display:grid;place-items:center;margin:8px auto 14px}
+
+/* Redemption screen */
+.redeem{position:fixed;inset:0;z-index:60;background:linear-gradient(160deg,#0A2370 0%,#1D4ED8 60%,#3B82F6 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));overflow:hidden}
+.redeem::before{content:"";position:absolute;inset:-60%;background:repeating-linear-gradient(45deg,rgba(255,255,255,.09) 0 24px,transparent 24px 48px);animation:slide 1.6s linear infinite}
+@keyframes slide{to{transform:translateX(67.88px)}}
+.redeem > *{position:relative}
+.redeem .check{width:96px;height:96px;border-radius:50%;background:#fff;display:grid;place-items:center;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.3)}}
+.redeem .r-biz{font-size:18px;font-weight:700;margin:20px 0 2px;opacity:.9}
+.redeem .r-deal{font-family:var(--display);font-weight:800;font-size:clamp(32px,9vw,46px);line-height:1.05;letter-spacing:-.03em;max-width:14ch;margin:0 auto 18px}
+.redeem .clock{font-family:var(--display);font-weight:800;font-size:clamp(56px,17vw,88px);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.redeem .r-date{font-size:17px;margin:6px 0 18px}
+.redeem .r-pass{background:rgba(0,0,0,.22);border-radius:12px;padding:10px 16px;font-size:15px;margin-bottom:24px}
+.redeem .btn{background:#fff;color:#1D4ED8;max-width:320px}
+.redeem .hint{font-size:13px;opacity:.85;margin-top:14px;max-width:30ch}
+
+/* Welcome tour */
+.scrim.center{align-items:center;padding:20px}
+.welcome{background:var(--bg);width:100%;max-width:420px;border-radius:28px;padding:30px 24px 22px;text-align:center;animation:up .25s ease-out}
+.w-icon{width:84px;height:84px;border-radius:26px;margin:0 auto 18px;display:grid;place-items:center;color:#fff;
+  background:radial-gradient(circle at 80% 15%,rgba(147,197,253,.7),transparent 50%),linear-gradient(135deg,#0A2370,#1D4ED8 60%,#3B82F6);box-shadow:0 16px 30px -16px rgba(29,78,216,.8)}
+.w-step{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:0 0 6px}
+.welcome h2{margin:0 0 10px}
+.welcome .w-body{color:var(--muted);min-height:100px;margin:0 0 8px}
+.dots{display:flex;justify-content:center;gap:8px;margin:0 0 20px}
+.dots i{width:8px;height:8px;border-radius:99px;background:var(--line);transition:width .2s}
+.dots i.on{width:24px;background:var(--royal)}
+.w-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}
+
+@media (prefers-reduced-motion: reduce){
+  .welcome{animation:none}
+  .redeem::before,.redeem .check,.sheet{animation:none}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="tabs" aria-label="Main"><div class="in">
+  <a href="#offers" id="tab-offers"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9V5a2 2 0 0 1 2-2h4l12 12-6 6L3 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Offers</a>
+  <a href="#pass" id="tab-pass"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M15 5v14"/></svg>My pass</a>
+</div></nav>
+<div id="layer"></div>
+
+<script>
+const ORG = "DCHS Tigers Football";
+const PRICE = 25;
+const TEAMS = ["Tigers Football team fund","Sample Player #7","Sample Player #12","Sample Player #22","Sample Player #54"];
+const OFFERS = [
+  {id:"marios",biz:"Mario’s Brick Oven",deal:"$5 off any large pizza",cat:"Food",limit:"monthly",value:5,color:"#C2410C",fine:"Dine-in or pickup. Can’t be combined with other offers.",addr:"214 Main St"},
+  {id:"sunrise",biz:"Sunrise Coffee Co.",deal:"Free pastry with any drink",cat:"Food",limit:"monthly",value:4,color:"#7C4A2D",fine:"One pastry per visit. Any size drink.",addr:"9 Depot Square"},
+  {id:"elsol",biz:"Taqueria El Sol",deal:"Free chips & queso with any entrée",cat:"Food",limit:"unlimited",value:6,color:"#B91C1C",fine:"Dine-in only.",addr:"77 River Rd"},
+  {id:"scoops",biz:"Scoops Creamery",deal:"Buy one cone, get one free",cat:"Food",limit:"monthly",value:4,color:"#BE185D",fine:"Equal or lesser value. Seasonal hours.",addr:"5 Lake Ave"},
+  {id:"bowl",biz:"Lakeside Lanes",deal:"Free shoe rental for up to 4",cat:"Fun",limit:"monthly",value:16,color:"#6D28D9",fine:"Valid with paid game. Not on league nights.",addr:"1200 Shoreline Dr"},
+  {id:"cinema",biz:"Main Street Cinema",deal:"$3 off any movie ticket",cat:"Fun",limit:"unlimited",value:3,color:"#1E40AF",fine:"One ticket per visit.",addr:"140 Main St"},
+  {id:"shack",biz:"The Sport Shack",deal:"20% off cleats, gloves & bats",cat:"Shopping",limit:"once",value:15,color:"#047857",fine:"Full-price items only.",addr:"3 Commerce Pkwy"},
+  {id:"hardware",biz:"Pinecrest Hardware",deal:"15% off one item",cat:"Shopping",limit:"once",value:8,color:"#B45309",fine:"Excludes power tools and gift cards.",addr:"60 Pinecrest Blvd"},
+  {id:"bloom",biz:"Bloom Florist",deal:"10% off any arrangement",cat:"Shopping",limit:"once",value:6,color:"#9D174D",fine:"In-store orders only.",addr:"22 Elm St"},
+  {id:"wash",biz:"Glow Car Wash",deal:"$10 off the Ultimate wash",cat:"Services",limit:"once",value:10,color:"#0E7490",fine:"Can’t be combined with memberships.",addr:"880 Route 9"},
+  {id:"cuts",biz:"Fresh Cuts Barbershop",deal:"$5 off any haircut",cat:"Services",limit:"monthly",value:5,color:"#334155",fine:"Walk-ins and appointments.",addr:"31 Oak St"}
+];
+const LIMIT = {once:"One time",monthly:"Once a month",unlimited:"Every visit"};
+const CATS = ["All","Food","Fun","Shopping","Services"];
+const KEY = "hometown-pass-demo";
+
+let state = load();
+let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0]};
+let clockTimer = null;
+
+function load(){
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[]};
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function initials(b){ return b.replace(/^The /,"").split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
+function fmtDay(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+function logo(o){ return `<span class="logo" style="background:${o.color}" aria-hidden="true">${initials(o.biz)}</span>`; }
+
+function status(o){
+  if(!state.purchased) return {ok:false, locked:true};
+  const mine = state.redemptions.filter(r=>r.offerId===o.id);
+  if(o.limit==="once" && mine.length){
+    return {ok:false, msg:`Used ${fmtDay(new Date(mine[mine.length-1].ts))}`};
+  }
+  if(o.limit==="monthly"){
+    const now = new Date();
+    const hit = mine.find(r=>{const d=new Date(r.ts); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();});
+    if(hit){
+      const next = new Date(now.getFullYear(), now.getMonth()+1, 1);
+      return {ok:false, msg:`Used ${fmtDay(new Date(hit.ts))}. Available again ${fmtDay(next)}.`, short:`Back ${fmtDay(next)}`};
+    }
+  }
+  return {ok:true};
+}
+
+function passCard(sample){
+  const num = sample ? "00" : state.passNo;
+  const name = sample ? "Your name" : esc(state.name);
+  const team = sample ? "Team you support" : esc(state.team);
+  return `<div class="pass${sample?" sample":""}" role="img" aria-label="${sample?"Sample pass":"Advantage Pass number "+num+" for "+name}">
+    <div class="pass-top"><span>Advantage Pass</span><span>2026–27</span></div>
+    <div class="pass-num"><span class="no">No.</span>${num}</div>
+    <div class="pass-who"><strong>${name}</strong><span>${team}</span></div>
+    <div class="pass-by">Presented by <span>Your logo here</span></div>
+  </div>`;
+}
+
+const header = `<div class="top"><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" fill="var(--royal)"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" fill="var(--gold)"/></svg>${ORG}</div>`;
+
+function partners(){
+  return `<section class="partners" aria-label="Platform Partners">
+    <p class="lbl">Presented by</p>
+    <div class="slot big">Presenting Partner logo</div>
+    <p class="lbl">Conference Partners</p>
+    <div class="slots"><div class="slot">Partner logo</div><div class="slot">Partner logo</div><div class="slot">Partner logo</div></div>
+  </section>`;
+}
+
+/* ---------- Welcome tour ---------- */
+const ICON = p => `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const SLIDES = [
+  {icon:ICON('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>'), title:"Welcome to Home Field Advantage",
+   body:`A fundraising pass for ${ORG}. Buy one pass, save at local businesses all season, and every dollar backs the team.`},
+  {icon:ICON('<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M9 16V8l3 5 3-5v8"/>'), title:"Join the Varsity Club",
+   body:"Buy your Advantage Pass right here. It lives on your phone with no app to download, and you’ll earn your varsity letter."},
+  {icon:ICON('<path d="M3 9V5a2 2 0 0 1 2-2h4l12 12-6 6L3 9z"/><circle cx="7.5" cy="7.5" r="1.5"/>'), title:"Use your Perks",
+   body:"Browse deals from Community MVPs, the local businesses backing the team. At checkout, tap Redeem while the cashier watches."},
+  {icon:ICON('<path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/>'), title:"Back your team",
+   body:"Choose the player who shared the pass with you so they get credit. Your support goes straight to the program."}
+];
+let wStep = 0;
+function renderWelcome(){
+  const s = SLIDES[wStep], last = wStep===SLIDES.length-1;
+  document.getElementById("layer").innerHTML = `<div class="scrim center" data-action="scrim"><div class="welcome" role="dialog" aria-modal="true" aria-labelledby="wt">
+    <div class="w-icon">${s.icon}</div>
+    <p class="w-step">Step ${wStep+1} of ${SLIDES.length}</p>
+    <h2 id="wt">${s.title}</h2>
+    <p class="w-body">${s.body}</p>
+    <div class="dots" aria-hidden="true">${SLIDES.map((_,i)=>`<i class="${i===wStep?"on":""}"></i>`).join("")}</div>
+    <div class="w-actions">
+      <button class="btn ghost" data-action="w-back">${wStep===0?"Skip":"Back"}</button>
+      <button class="btn" data-action="w-next">${last?"Get started":"Next"}</button>
+    </div></div></div>`;
+  document.querySelector('[data-action="w-next"]').focus();
+}
+
+/* ---------- Views ---------- */
+function viewBuy(){
+  return `<div class="wrap">${header}
+    <h1>Back the teams. Save all year.</h1>
+    <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports Dundy County High School Varsity Football.</p>
+    ${passCard(true)}
+    <div class="price"><b>$${PRICE}</b><span class="small">One pass, good for a full year</span></div>
+    <label class="f" for="team">Which player gets credit?</label>
+    <select class="field" id="team">${TEAMS.map(t=>`<option${t===ui.team?" selected":""}>${t}</option>`).join("")}</select>
+    <button class="btn" data-action="checkout">Buy pass for $${PRICE}</button>
+    <p class="small" style="margin-top:10px">A player’s personal link picks them automatically.</p>
+    <h3>How it works</h3>
+    <ol class="steps">
+      <li><span>Buy your pass here. It lives on your phone, no app download needed.</span></li>
+      <li><span>Pick a deal at any participating business.</span></li>
+      <li><span>At checkout, tap Redeem while the cashier watches.</span></li>
+    </ol>
+    <button class="linkbtn" data-action="tour">Take the quick tour</button>
+    <h3>Deals from</h3>
+    <div class="bizwrap">${OFFERS.map(o=>`<span>${o.biz}</span>`).join("")}</div>
+    ${partners()}
+    <p class="small" style="margin-top:28px">Prototype with sample businesses. Payments are simulated.</p>
+  </div>`;
+}
+
+function viewPass(){
+  const saved = state.redemptions.reduce((s,r)=>s+(OFFERS.find(o=>o.id===r.offerId)?.value||0),0);
+  const hist = [...state.redemptions].reverse();
+  return `<div class="wrap">${header}
+    ${passCard(false)}
+    <div class="stats">
+      <div class="stat"><b>$${saved}</b><span class="small">Saved so far</span></div>
+      <div class="stat"><b>${state.redemptions.length}</b><span class="small">Deals redeemed</span></div>
+    </div>
+    <p class="small" style="margin-top:14px">Your $${PRICE} went to ${esc(state.team)}. Pass good through Aug 31, 2027.</p>
+    <h3>Redemption history</h3>
+    ${hist.length ? `<div class="list hist">${hist.map(r=>{const o=OFFERS.find(x=>x.id===r.offerId); const d=new Date(r.ts);
+      return `<div class="row">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>`
+      : `<div class="list"><div class="empty">No deals redeemed yet.<br><a class="linkbtn" href="#offers">Browse offers</a></div></div>`}
+    ${partners()}
+    <p style="margin-top:28px;display:flex;gap:20px"><button class="linkbtn" data-action="tour">Take the quick tour</button><button class="linkbtn" data-action="reset">Reset demo</button></p>
+  </div>`;
+}
+
+function viewOffers(){
+  return `<div class="wrap">${header}
+    <h2>Offers</h2>
+    ${state.purchased ? "" : `<div class="banner"><span>Get a pass to redeem these deals.</span><a class="btn" href="#pass">Get a pass</a></div>`}
+    <input class="field search" id="q" type="search" placeholder="Search businesses or deals" value="${esc(ui.q)}" aria-label="Search offers">
+    <div class="chips" role="group" aria-label="Category">${CATS.map(c=>`<button class="chip" data-action="cat" data-cat="${c}" aria-pressed="${c===ui.cat}">${c}</button>`).join("")}</div>
+    <div class="list" id="list">${offerRows()}</div>
+    ${partners()}
+  </div>`;
+}
+
+function offerRows(){
+  const q = ui.q.trim().toLowerCase();
+  const items = OFFERS.filter(o=>(ui.cat==="All"||o.cat===ui.cat) && (!q || (o.biz+" "+o.deal).toLowerCase().includes(q)));
+  if(!items.length) return `<div class="empty">No offers match “${esc(ui.q)}”. Try another word or category.</div>`;
+  return items.map(o=>{
+    const s = status(o);
+    const tag = s.locked ? `<span class="tag">${LIMIT[o.limit]}</span>`
+      : s.ok ? `<span class="tag">${LIMIT[o.limit]}</span>`
+      : `<span class="tag used">${s.short || "Used"}</span>`;
+    return `<button class="row" data-action="offer" data-id="${o.id}">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div></div>${tag}</button>`;
+  }).join("");
+}
+
+/* ---------- Sheets ---------- */
+function openSheet(html){
+  document.getElementById("layer").innerHTML = `<div class="scrim" data-action="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
+  const f = document.querySelector(".sheet button, .sheet input");
+  if(f) f.focus();
+}
+function closeSheet(){ document.getElementById("layer").innerHTML = ""; }
+
+function sheetCheckout(){
+  openSheet(`<h2 style="margin-top:0">Checkout</h2>
+    <p class="small">Advantage Pass 2026–27, crediting ${esc(ui.team)}.</p>
+    <label class="f" for="nm">Full name</label><input class="field" id="nm" autocomplete="name" value="Jordan Ellis">
+    <label class="f" for="em">Email</label><input class="field" id="em" type="email" autocomplete="email" value="jordan@example.com">
+    <label class="f" for="cc">Card</label><input class="field" id="cc" value="4242 4242 4242 4242   12/28   123" inputmode="numeric">
+    <p class="test">Test mode. In the real app this is Stripe Checkout, and no card is charged here.</p>
+    <button class="btn" data-action="pay" id="paybtn">Pay $${PRICE}.00</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+
+function sheetSuccess(){
+  openSheet(`<div style="text-align:center">
+    <div class="ok"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+    <h2 style="margin-top:0">Pass No. ${state.passNo} is yours</h2>
+    <p>$${PRICE} goes to ${esc(state.team)}. We emailed your receipt and sign-in link to ${esc(state.email)}.</p>
+    <a class="btn" href="#offers" data-action="close">Browse offers</a></div>`);
+}
+
+function sheetOffer(id){
+  const o = OFFERS.find(x=>x.id===id); const s = status(o);
+  let cta;
+  if(s.locked) cta = `<a class="btn" href="#pass" data-action="close">Get a pass to redeem</a>`;
+  else if(!s.ok) cta = `<p class="notice">${s.msg}</p><button class="btn" disabled>Redeem in store</button>`;
+  else cta = `<button class="btn" data-action="redeem-start" data-id="${o.id}">Redeem in store</button>`;
+  openSheet(`${logo(o)}
+    <div class="bigdeal">${o.deal}</div>
+    <div style="font-weight:700">${o.biz}</div>
+    <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Where</dt><dd>${o.addr}</dd><dt>Details</dt><dd>${o.fine}</dd><dt>Expires</dt><dd>Aug 31, 2027</dd></dl>
+    ${cta}
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Close</button>`);
+}
+
+function sheetConfirm(id){
+  const o = OFFERS.find(x=>x.id===id);
+  const use = o.limit==="once" ? "This uses your one-time deal." : o.limit==="monthly" ? "This uses this month’s deal." : "You can use this deal every visit.";
+  openSheet(`<h2 style="margin-top:0">Ready at the register?</h2>
+    <p>Tap Redeem while the cashier at <strong>${o.biz}</strong> is watching. ${use}</p>
+    <div class="row2"><button class="btn ghost" data-action="close">Not yet</button><button class="btn" data-action="redeem-confirm" data-id="${o.id}">Redeem</button></div>`);
+}
+
+/* ---------- Redemption screen ---------- */
+function showRedeemed(id){
+  const o = OFFERS.find(x=>x.id===id);
+  closeSheet();
+  const el = document.createElement("div");
+  el.className = "redeem"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Deal redeemed");
+  el.innerHTML = `<div class="check"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+    <div class="r-biz">${o.biz}</div>
+    <div class="r-deal">${o.deal}</div>
+    <div class="clock" id="clock" aria-live="off"></div>
+    <div class="r-date" id="rdate"></div>
+    <div class="r-pass">Pass No. ${state.passNo}, ${esc(state.name)}</div>
+    <button class="btn" data-action="done">Done</button>
+    <div class="hint">On a real redemption the clock ticks and the stripes move. A screenshot can’t.</div>`;
+  document.getElementById("layer").appendChild(el);
+  const tick = ()=>{ const n=new Date();
+    document.getElementById("clock").textContent = n.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit"});
+    document.getElementById("rdate").textContent = n.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}); };
+  tick(); clockTimer = setInterval(tick,1000);
+  el.querySelector(".btn").focus();
+}
+
+/* ---------- Routing & events ---------- */
+function route(){
+  const h = location.hash.slice(1);
+  ui.view = (h==="offers"||h==="pass") ? h : (state.purchased ? "offers" : "pass");
+  render();
+}
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = ui.view==="offers" ? viewOffers() : (state.purchased ? viewPass() : viewBuy());
+  document.getElementById("tab-offers").setAttribute("aria-current", ui.view==="offers"?"page":"false");
+  document.getElementById("tab-pass").setAttribute("aria-current", ui.view==="pass"?"page":"false");
+  document.getElementById("tab-pass").lastChild.textContent = state.purchased ? "My pass" : "Get a pass";
+  const team = document.getElementById("team");
+  if(team) team.addEventListener("change", e=>ui.team=e.target.value);
+  const q = document.getElementById("q");
+  if(q) q.addEventListener("input", e=>{ ui.q=e.target.value; document.getElementById("list").innerHTML = offerRows(); });
+}
+
+document.addEventListener("click", e=>{
+  const t = e.target.closest("[data-action]"); if(!t) return;
+  const a = t.dataset.action;
+  if(a==="scrim"){ if(e.target===t) closeSheet(); return; }
+  if(a==="close"){ closeSheet(); return; }
+  if(a==="tour"){ wStep=0; renderWelcome(); return; }
+  if(a==="w-next"){ if(wStep<SLIDES.length-1){ wStep++; renderWelcome(); } else closeSheet(); return; }
+  if(a==="w-back"){ if(wStep>0){ wStep--; renderWelcome(); } else closeSheet(); return; }
+  if(a==="checkout"){ sheetCheckout(); }
+  if(a==="pay"){
+    const name = document.getElementById("nm").value.trim(), email = document.getElementById("em").value.trim();
+    if(!name || !email.includes("@")){ alert("Enter your name and a valid email to continue."); return; }
+    t.disabled = true; t.textContent = "Processing…";
+    setTimeout(()=>{
+      Object.assign(state,{purchased:true,name,email,team:ui.team,passNo:String(100+Math.floor(Math.random()*900)),redemptions:[]});
+      save(); render(); sheetSuccess();
+    },900);
+  }
+  if(a==="cat"){ ui.cat = t.dataset.cat; render(); }
+  if(a==="offer"){ sheetOffer(t.dataset.id); }
+  if(a==="redeem-start"){ sheetConfirm(t.dataset.id); }
+  if(a==="redeem-confirm"){
+    state.redemptions.push({offerId:t.dataset.id, ts:Date.now()}); save();
+    showRedeemed(t.dataset.id);
+  }
+  if(a==="done"){ clearInterval(clockTimer); document.getElementById("layer").innerHTML=""; render(); }
+  if(a==="reset"){ state = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[]}; state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".scrim")) closeSheet(); });
+window.addEventListener("hashchange", ()=>{ route(); window.scrollTo(0,0); });
+route();
+if(!state.seenWelcome){ state.seenWelcome=true; save(); wStep=0; renderWelcome(); }
+</script>
+</body>
+</html>
