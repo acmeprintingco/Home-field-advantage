@@ -299,6 +299,11 @@ const NEW_COLORS = ["#0F766E","#A16207","#7E22CE","#BE123C","#15803D","#1D4ED8"]
 let SEED_PENDING = [
   {pid:"p1",type:"change",offerId:"bowl",ts:Date.now()-5*3600e3,proposed:{deal:"Free shoe rental for up to 2",limit:"monthly"}}
 ];
+let SEED_DEALS = [
+  {id:"d1",bizId:"marios",deal:"Free 2-liter with any family meal",limit:"monthly",fine:"Dine-in or pickup.",value:3,sports:["football"],status:"live"},
+  {id:"d2",bizId:"scoops",deal:"Free sundae the day after a home win",limit:"unlimited",fine:"Show your pass the day after any home win.",value:5,sports:["volleyball","boys-basketball","girls-basketball"],status:"live"},
+  {id:"d3",bizId:"sunrise",deal:"Free hot chocolate on home game days",limit:"unlimited",fine:"Any home game day.",value:3,sports:"all",status:"pending",ts:Date.now()-3*3600e3}
+];
 let SEED_ADDED = [
   {id:"prairie",biz:"Prairie Rose Bakery",cat:"Food",addr:"712 Chief St",owner:"Linda Weers",contact:"(308) 555-0177",color:"#A16207",value:4,
    contract:{file:"Prairie-Rose-partner-agreement.pdf",level:"Community MVP",ends:"2027-08-31"},status:"submitted",submitted:Date.now()-26*3600e3,
@@ -321,13 +326,25 @@ const LEVELS = ["Community MVP","Conference Partner","Presenting Partner"];
 let OWNERS = {marios:"Mario Rossi",sunrise:"Jen Haddix",elsol:"Luis Ortega",scoops:"Becky Lambert",bowl:"Gary Pfeifer",cinema:"Tom Weller",shack:"Brett Kunkel",hardware:"Dale Shaw",bloom:"Amy Kenney",wash:"Chris Odle",cuts:"Marcus Bell"};
 let ALLBIZ = [];
 let OFFERS = [];
+let ALLDEALS = [];
 function rebuildOffers(){
   const added = (state.added||[]);
   const today = new Date().toISOString().slice(0,10);
   ALLBIZ = [...BASE_OFFERS.map(o=>Object.assign({status:"live",owner:OWNERS[o.id]},o)), ...added].map(o=>{ const x = Object.assign({}, o, (state.edits||{})[o.id]||{}); if(x.paused && x.paused<=today) x.paused = null; return x; });
-  OFFERS = ALLBIZ.filter(o=>o.status==="live");
+  ALLDEALS = [];
+  ALLBIZ.forEach(b=>{
+    ALLDEALS.push(Object.assign({}, b, {bizId:b.id, primary:true, sports:b.sports||"all"}));
+    (state.deals||[]).filter(d=>d.bizId===b.id).forEach(d=>ALLDEALS.push(Object.assign({}, b, d, {id:d.id, bizId:b.id, primary:false, sports:d.sports||"all", dealStatus:d.status})));
+  });
+  OFFERS = ALLDEALS.filter(o=>o.status==="live" && (o.primary || o.dealStatus==="live"));
   if(!ALLBIZ.find(o=>o.id===ui.biz)) ui.biz = OFFERS[0].id;
 }
+function dealById(id){ return ALLDEALS.find(x=>x.id===id); }
+function availFor(o, sid){ return !sid || !o.sports || o.sports==="all" || o.sports.includes(sid); }
+function fanSportId(){ if(state.purchased){ const sp = sportOf(state.team||""); if(sp) return sp.id; } return SPORT ? SPORT.id : null; }
+function fanOffers(){ const sid = fanSportId(); return OFFERS.filter(o=>availFor(o,sid)); }
+function bizNames(list){ return [...new Set(list.map(o=>o.biz))]; }
+function teamsText(o){ return !o.sports || o.sports==="all" ? "All teams" : o.sports.map(id=>(SPORTS.find(x=>x.id===id)||{}).name).filter(Boolean).join(", "); }
 function clean(v){ return String(v||"").replace(/[<>]/g,"").trim(); }
 const CATS = ["All","Food","Fun","Shopping","Services"];
 let KEY = "hfa-demo-v4-tigers";
@@ -376,6 +393,11 @@ if(SCHOOL==="bison"){
   ];
   OWNERS = {diner:"Carol Hinz",pizza:"Nick Bauer",bean:"Tasha Molcyk",lanes:"Ron Sis",cinema:"Pete Garcia",outfit:"Jared Hoyt",hardware:"Bill Stamm",wash:"Kelsey Ruff",barber:"Andre Collins"};
   SEED_PENDING = [{pid:"p1",type:"change",offerId:"lanes",ts:Date.now()-7*3600e3,proposed:{deal:"One free game per month",limit:"monthly"}}];
+  SEED_DEALS = [
+    {id:"d1",bizId:"pizza",deal:"Team night: 15% off your whole order",limit:"monthly",fine:"Dine-in only.",value:6,sports:["volleyball"],status:"live"},
+    {id:"d2",bizId:"bean",deal:"Free cookie with any drink after practice",limit:"unlimited",fine:"Weekdays after 3 pm.",value:2,sports:["wrestling","track"],status:"live"},
+    {id:"d3",bizId:"diner",deal:"Free pancake stack on Saturday mornings",limit:"monthly",fine:"Saturdays before 11 am.",value:6,sports:"all",status:"pending",ts:Date.now()-4*3600e3}
+  ];
   SEED_ADDED = [
     {id:"smoke",biz:"Sandhills Smokehouse",cat:"Food",addr:"1102 W B St",owner:"Dustin Kaiser",contact:"(308) 555-0193",color:"#7C2D12",value:4,
      contract:{file:"Smokehouse-partner-agreement.pdf",level:"Conference Partner",ends:"2027-08-31"},status:"submitted",submitted:Date.now()-20*3600e3,
@@ -467,8 +489,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{}});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{}};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{},deals:JSON.parse(JSON.stringify(SEED_DEALS))});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{},deals:JSON.parse(JSON.stringify(SEED_DEALS))};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -555,7 +577,7 @@ function viewSportPicker(){
   return `<div class="wrap">${header()}
     ${BR().photo ? `<img class="hero" src="${BR().photo}" alt="${SC.name} ${SC.mascot}">` : ""}
     <h1>Pick your team.</h1>
-    <p class="lede">Every Advantage Pass backs one ${SC.mascot} team and unlocks the same ${OFFERS.length} local deals through Aug 31, 2027.</p>
+    <p class="lede">Every Advantage Pass backs one ${SC.mascot} team and unlocks deals at ${bizNames(OFFERS).length} local businesses through Aug 31, 2027. Some deals are just for certain teams.</p>
     <div class="list">${SPORTS.map(sp=>{ const st = sportStats(sp);
       return `<a class="row" href="${sportPath(sp.id)}" style="text-decoration:none;color:inherit;grid-template-columns:46px 1fr auto">
         <span class="logo" style="background:var(--chip);font-size:24px" aria-hidden="true">${sp.icon}</span>
@@ -563,7 +585,7 @@ function viewSportPicker(){
           <div class="goal" style="padding:0;border:0;margin:6px 0 0;background:none"><div class="bar" style="margin:0;height:6px"><i style="width:${st.pct}%"></i></div></div></div>
         <span class="small">›</span></a>`; }).join("")}</div>
     <h3>Deals from</h3>
-    <div class="bizwrap">${OFFERS.map(o=>`<span>${o.biz}</span>`).join("")}</div>
+    <div class="bizwrap">${bizNames(OFFERS).map(n=>`<span>${n}</span>`).join("")}</div>
     ${partners()}
   </div>`;
 }
@@ -853,7 +875,7 @@ function viewBuy(){
       : `<div class="hero-slot"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Team photo goes here<span class="small" style="font-weight:500">Coaches add it from the Coach tab</span></div>`}
     ${nextUpCard(SPORT)}
     <h1>Back the teams. Save all year.</h1>
-    <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports ${SCHOOL_FULL}.</p>
+    <p class="lede">The Advantage Pass unlocks ${fanOffers().length} deals at ${bizNames(fanOffers()).length} local businesses through Aug 31, 2027. Every dollar supports ${SCHOOL_FULL}.</p>
     ${passCard(true)}
     <div class="price"><b>$${PRICE}</b><span class="small">One pass, good for a full year</span></div>
     ${ui.fromLink ? `<p class="supporting">You’re supporting ${esc(shortLabel(ui.team))}</p>` : ""}
@@ -870,14 +892,14 @@ function viewBuy(){
     </ol>
     <button class="linkbtn" data-action="tour">Take the quick tour</button>
     <h3>Deals from</h3>
-    <div class="bizwrap">${OFFERS.map(o=>`<span>${o.biz}</span>`).join("")}</div>
+    <div class="bizwrap">${bizNames(fanOffers()).map(n=>`<span>${n}</span>`).join("")}</div>
     ${partners()}
     <p class="small" style="margin-top:28px">Prototype with sample businesses. Payments are simulated.</p>
   </div>`;
 }
 
 function viewPass(){
-  const saved = state.redemptions.reduce((s,r)=>s+(OFFERS.find(o=>o.id===r.offerId)?.value||0),0);
+  const saved = state.redemptions.reduce((s,r)=>s+(dealById(r.offerId)?.value||0),0);
   const hist = [...state.redemptions].reverse();
   return `<div class="wrap">${header()}
     ${SPORT ? nextUpCard(SPORT) : ""}
@@ -894,7 +916,7 @@ function viewPass(){
     <button class="linkbtn" data-action="email" data-e="receipt">View your receipt email</button>
     ${householdCard()}
     <h3>Redemption history</h3>
-    ${hist.length ? `<div class="list hist">${hist.map(r=>{const o=OFFERS.find(x=>x.id===r.offerId); const d=new Date(r.ts);
+    ${hist.length ? `<div class="list hist">${hist.map(r=>{const o=dealById(r.offerId); if(!o) return ""; const d=new Date(r.ts);
       return `<div class="row">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}${r.by?` · ${esc(r.by.split(" ")[0])}`:""}</div></div></div>`;}).join("")}</div>`
       : `<div class="list"><div class="empty">No deals redeemed yet.<br><a class="linkbtn" href="#offers">Browse offers</a></div></div>`}
     ${partners()}
@@ -915,14 +937,14 @@ function viewOffers(){
 
 function offerRows(){
   const q = ui.q.trim().toLowerCase();
-  const items = OFFERS.filter(o=>(ui.cat==="All"||o.cat===ui.cat) && (!q || (o.biz+" "+o.deal).toLowerCase().includes(q)));
+  const items = fanOffers().filter(o=>(ui.cat==="All"||o.cat===ui.cat) && (!q || (o.biz+" "+o.deal).toLowerCase().includes(q)));
   if(!items.length) return `<div class="empty">No offers match “${esc(ui.q)}”. Try another word or category.</div>`;
   return items.map(o=>{
     const s = status(o);
     const tag = s.paused ? `<span class="tag used">Paused</span>` : s.locked ? `<span class="tag">${LIMIT[o.limit]}</span>`
       : s.ok ? `<span class="tag">${LIMIT[o.limit]}</span>`
       : `<span class="tag used">${s.short || "Used"}</span>`;
-    return `<button class="row" data-action="offer" data-id="${o.id}">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.deal}</div></div>${tag}</button>`;
+    return `<button class="row" data-action="offer" data-id="${o.id}">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${esc(o.deal)}</div>${o.sports&&o.sports!=="all"?`<div class="small" style="color:var(--link,var(--royal));font-weight:700">${teamsText(o)} exclusive</div>`:""}</div>${tag}</button>`;
   }).join("");
 }
 
@@ -1073,7 +1095,7 @@ function viewCoach(){
     <p class="small" style="margin-top:12px">Each player texts their link to family and friends. Anyone who buys through it is credited to that player automatically.</p>
     <h3>Community impact</h3>
     <div class="stats">
-      <div class="stat"><b>${OFFERS.length}</b><span class="small">Local businesses</span></div>
+      <div class="stat"><b>${bizNames(OFFERS.filter(o=>availFor(o,SPORT.id))).length}</b><span class="small">Local businesses</span></div>
       <div class="stat"><b>${redeemed}</b><span class="small">Deals redeemed</span></div>
     </div>
     ${partners()}
@@ -1094,6 +1116,7 @@ function viewBiz(){
     <select class="field" id="sd-limit">${Object.entries(LIMIT).map(([k,v])=>`<option value="${k}"${k==="monthly"?" selected":""}>${v}</option>`).join("")}</select>
     <label class="f" for="sd-fine">Fine print</label><textarea class="field" id="sd-fine" rows="2" placeholder="e.g. In-store only. Not valid on holidays."></textarea>
     <label class="f" for="sd-addr">Address</label><input class="field" id="sd-addr" value="${esc(o.addr)}">
+    ${teamsPicker("all")}
     <button class="btn" data-action="biz-setup-send">Submit for approval</button>
     ${demoNote}</div>`;
   if(o.status==="submitted") return `<div class="wrap">${header()}<p class="kicker">Business view</p>${signedIn}
@@ -1101,22 +1124,28 @@ function viewBiz(){
     <p class="lede">The program is reviewing your deal. We’ll text you when it’s on the pass.</p>
     <dl class="meta"><dt>Deal</dt><dd><strong>${esc(o.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd></dl>
     ${demoNote}</div>`;
-  const mine = state.redemptions.filter(r=>r.offerId===o.id).length;
+  const myR = state.redemptions.filter(r=>(dealById(r.offerId)||{}).bizId===o.id);
+  const mine = myR.length;
+  const myDeals = ALLDEALS.filter(d=>d.bizId===o.id);
   const [month,total] = BIZSTATS[o.id]||[0,0]; const m = month+mine, t = total+mine;
   const now = Date.now();
   const recent = [
-    ...state.redemptions.filter(r=>r.offerId===o.id).map(r=>({ts:r.ts,pass:state.passNo})).reverse(),
+    ...myR.map(r=>({ts:r.ts,pass:state.passNo,deal:(dealById(r.offerId)||{}).deal})).reverse(),
     ...(BIZSTATS[o.id] ? [{ts:now-2.2*3600e3,pass:"214"},{ts:now-26*3600e3,pass:"187"},{ts:now-31*3600e3,pass:"342"},{ts:now-3.1*86400e3,pass:"129"}] : [])
   ].slice(0,5);
   return `<div class="wrap">${header()}
     <p class="kicker">Business view</p>
     ${signedIn}
-    <div class="biz-head">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Your deal: ${esc(o.deal)}</div></div></div>
-    ${bizStatusBox(o)}
-    <div class="row2" style="margin-top:12px">
-      <button class="btn" data-action="biz-edit">Edit deal</button>
-      ${o.paused ? `<button class="btn ghost" data-action="biz-resume">Resume deal</button>` : `<button class="btn ghost" data-action="biz-pause">Pause deal</button>`}
-    </div>
+    <div class="biz-head">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">${esc(o.addr)} · <button class="linkbtn" data-action="biz-info" style="padding:0;font-size:14px">Edit info</button></div></div></div>
+    ${o.paused?`<div class="supporting" style="margin-top:12px">⏸ All deals paused until ${fmtDay(new Date(o.paused+"T12:00"))}. Pass holders see them as paused.</div>`:""}
+    <h3 style="display:flex;justify-content:space-between;align-items:center">Your deals (${myDeals.length})<button class="copy" data-action="deal-new" style="margin:0">+ Add a deal</button></h3>
+    <div class="list">${myDeals.map(d=>{ const p = pendingFor(d.id); const st = !d.primary && d.dealStatus==="pending" ? ["Awaiting approval","used"] : p ? ["Change pending",""] : o.paused ? ["Paused","used"] : ["Live",""];
+      return `<button class="row" data-action="deal-edit" data-id="${d.id}" style="grid-template-columns:1fr auto">
+        <div><div class="deal">${esc(d.deal)}</div><div class="small">${LIMIT[d.limit]} · <b>${teamsText(d)}</b></div>
+        ${p?`<div class="small" style="margin-top:4px">Requested: ${p.proposed.remove?"remove this deal":`${esc(p.proposed.deal)} · ${LIMIT[p.proposed.limit]} · ${teamsText({sports:p.proposed.sports||d.sports})}`}</div>`:""}</div>
+        <span class="tag ${st[1]}">${st[0]}</span></button>`; }).join("")}</div>
+    <p class="small" style="margin-top:8px">Pick which teams each deal is for. A deal for one team, like “Team night for Volleyball,” only shows to fans who back that team.</p>
+    <div style="margin-top:10px">${o.paused ? `<button class="btn ghost" data-action="biz-resume">Resume all deals</button>` : `<button class="btn ghost" data-action="biz-pause">Pause all deals</button>`}</div>
     <div class="stats" style="margin-top:14px">
       <div class="stat"><b>${m}</b><span class="small">Visits this month</span></div>
       <div class="stat"><b>${t}</b><span class="small">Visits this season</span></div>
@@ -1127,9 +1156,8 @@ function viewBiz(){
     <button class="btn" data-action="biz-preview" data-id="${o.id}">See what your cashier sees</button>
     <h3>Recent visits</h3>
     ${recent.length ? `<div class="list hist">${recent.map(r=>{const d=new Date(r.ts);
-      return `<div class="row">${logo(o)}<div><div class="deal">Pass No. ${r.pass}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>` : `<div class="list"><div class="empty">No visits yet. They’ll show up here as pass holders redeem your deal.</div></div>`}
-    <h3>Deal rules</h3>
-    <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd><dt>Runs</dt><dd>Through Aug 31, 2027</dd></dl>
+      return `<div class="row">${logo(o)}<div><div class="deal">Pass No. ${r.pass}</div>${r.deal?`<div class="small">${esc(r.deal)}</div>`:""}<div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div></div></div>`;}).join("")}</div>` : `<div class="list"><div class="empty">No visits yet. They’ll show up here as pass holders redeem your deal.</div></div>`}
+    <h3>How limits work</h3>
     <p class="small">The app enforces the limit automatically, so a once-a-month deal can’t be used twice in a month. A pass can include one household member, and the limit is shared, so a couple gets one deal per month, not two.</p>
     ${partners()}
     ${demoNote}
@@ -1161,6 +1189,49 @@ function sheetBizEdit(){
     <button class="btn" data-action="biz-save">Save changes</button>
     <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
 }
+function teamsPicker(sel){
+  const all = !sel || sel==="all";
+  return `<label class="f">Which teams get this deal?</label>
+    <div class="list" style="margin-bottom:14px">
+      <label class="row" style="grid-template-columns:28px 1fr;cursor:pointer"><input type="checkbox" class="tm-all" ${all?"checked":""} style="width:20px;height:20px"><span class="deal">All ${SC.mascot} teams</span></label>
+      ${SPORTS.map(sp=>`<label class="row" style="grid-template-columns:28px 1fr;cursor:pointer"><input type="checkbox" class="tm" value="${sp.id}" ${!all&&sel.includes(sp.id)?"checked":""} ${all?"disabled":""} style="width:20px;height:20px"><span>${sp.icon} ${sp.name}</span></label>`).join("")}
+    </div>`;
+}
+function readTeams(){
+  const root = document.querySelector(".sheet") || document;
+  if(root.querySelector(".tm-all").checked) return "all";
+  const v = [...root.querySelectorAll(".tm:checked")].map(x=>x.value);
+  return v.length ? v : null;
+}
+function sheetDealEdit(id){
+  const d = id ? dealById(id) : null, p = id ? pendingFor(id) : null;
+  const cur = p && !p.proposed.remove ? Object.assign({}, d, p.proposed) : (d || {deal:"", limit:"monthly", fine:"", sports:"all"});
+  openSheet(`<h2 style="margin-top:0">${id?"Edit deal":"Add a deal"}</h2>
+    <p class="small">${id ? "Fine print updates right away. Making a deal smaller, less frequent or for fewer teams goes to the program for approval, because fans bought the pass expecting it. Making it better updates right away." : "New deals go live after the program approves them."}</p>
+    <label class="f" for="dl-deal">The deal</label><input class="field" id="dl-deal" value="${esc(cur.deal)}" placeholder="e.g. Team night: 15% off your whole order">
+    <label class="f" for="dl-limit">How often</label>
+    <select class="field" id="dl-limit">${Object.entries(LIMIT).map(([k,v])=>`<option value="${k}"${k===cur.limit?" selected":""}>${v}</option>`).join("")}</select>
+    ${teamsPicker(cur.sports)}
+    <label class="f" for="dl-fine">Fine print</label><textarea class="field" id="dl-fine" rows="2">${esc(cur.fine||"")}</textarea>
+    <p class="notice" id="dl-err" style="display:none"></p>
+    <button class="btn" data-action="deal-save" data-id="${id||""}">${id?"Save changes":"Submit for approval"}</button>
+    ${id && !d.primary ? `<button class="btn ghost" data-action="deal-remove" data-id="${id}" style="margin-top:10px">Remove this deal</button>` : ""}
+    ${p?`<button class="linkbtn" data-action="biz-cancel" data-pid="${p.pid}" style="display:block;margin:12px auto 0">Withdraw pending request</button>`:""}
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function sheetBizInfo(){
+  const o = ALLBIZ.find(x=>x.id===ui.biz);
+  openSheet(`<h2 style="margin-top:0">Business info</h2>
+    <label class="f" for="bi-addr">Address</label><input class="field" id="bi-addr" value="${esc(o.addr)}">
+    <button class="btn" data-action="biz-info-save">Save</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function applyDeal(id, v){
+  const d = dealById(id);
+  if(d.primary) state.edits[d.bizId] = Object.assign({}, state.edits[d.bizId], v);
+  else Object.assign(state.deals.find(x=>x.id===id), v);
+}
+function teamsSuperset(nw, old){ if(nw==="all") return true; if(old==="all"||!old) return false; return old.every(x=>nw.includes(x)); }
 function sheetBizPause(){
   const d = new Date(Date.now()+7*86400e3).toISOString().slice(0,10);
   const min = new Date(Date.now()+86400e3).toISOString().slice(0,10);
@@ -1193,9 +1264,9 @@ function holderRows(){
     <span class="small">›</span></button>`).join("");
 }
 function viewAdmin(){
-  const changes = state.pending;
+  const changes = state.pending.filter(p=>dealById(p.offerId));
   const ready = ALLBIZ.filter(o=>o.status==="submitted");
-  const n = changes.length + ready.length;
+  const n = changes.length + ready.length + (state.deals||[]).filter(d=>d.status==="pending").length;
   return `<div class="wrap">${header()}
     <p class="kicker">Admin · ${SC.name} ${SC.mascot}</p>
     ${adminTeams()}
@@ -1205,10 +1276,16 @@ function viewAdmin(){
         <div class="biz-head" style="margin:10px 0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Submitted ${fmtDay(new Date(o.submitted))} by ${esc(o.owner)}</div></div></div>
         <dl class="meta" style="margin:0 0 14px"><dt>Deal</dt><dd><strong>${esc(o.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd><dt>Contract</dt><dd>${o.contract.level} · ${esc(o.contract.file)}</dd></dl>
         <div class="row2"><button class="btn ghost" data-action="adm-new-decline" data-id="${o.id}">Send back</button><button class="btn" data-action="adm-new-approve" data-id="${o.id}">Approve</button></div></div>`).join("")}
-    ${changes.map(p=>{ const o = ALLBIZ.find(x=>x.id===p.offerId);
-        return `<div class="goal"><span class="tag">Deal change</span>
+    ${(state.deals||[]).filter(d=>d.status==="pending").map(d=>{ const o = dealById(d.id);
+        return `<div class="goal"><span class="tag">Added deal</span>
+          <div class="biz-head" style="margin:10px 0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Requested ${fmtDay(new Date(d.ts||Date.now()))}</div></div></div>
+          <dl class="meta" style="margin:0 0 14px"><dt>Deal</dt><dd><strong>${esc(d.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[d.limit]}</dd><dt>For</dt><dd>${teamsText(o)}</dd><dt>Details</dt><dd>${esc(d.fine||"")}</dd></dl>
+          <div class="row2"><button class="btn ghost" data-action="adm-deal-decline" data-id="${d.id}">Decline</button><button class="btn" data-action="adm-deal-approve" data-id="${d.id}">Approve</button></div></div>`; }).join("")}
+    ${changes.map(p=>{ const o = dealById(p.offerId); if(!o) return "";
+        const pr = p.proposed;
+        return `<div class="goal"><span class="tag">${pr.remove?"Remove deal":"Deal change"}</span>
           <div class="biz-head" style="margin:10px 0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Requested ${fmtDay(new Date(p.ts))}</div></div></div>
-          <dl class="meta" style="margin:0 0 14px"><dt>Now</dt><dd>${esc(o.deal)} · ${LIMIT[o.limit]}</dd><dt>Wants</dt><dd><strong>${esc(p.proposed.deal)} · ${LIMIT[p.proposed.limit]}</strong></dd></dl>
+          <dl class="meta" style="margin:0 0 14px"><dt>Now</dt><dd>${esc(o.deal)} · ${LIMIT[o.limit]} · ${teamsText(o)}</dd><dt>Wants</dt><dd><strong>${pr.remove ? "Take this deal off the pass" : `${esc(pr.deal)} · ${LIMIT[pr.limit]} · ${teamsText({sports:pr.sports||o.sports})}`}</strong></dd></dl>
           <div class="row2"><button class="btn ghost" data-action="adm-decline" data-pid="${p.pid}">Decline</button><button class="btn" data-action="adm-approve" data-pid="${p.pid}">Approve</button></div></div>`;
     }).join("")}
     ${n ? "" : `<div class="list"><div class="empty">You’re all caught up.</div></div>`}
@@ -1269,7 +1346,7 @@ function sheetHolder(p, note){
     ${h.member ? `<div class="list"><div class="row" style="cursor:default;grid-template-columns:46px 1fr auto"><span class="logo" style="background:var(--royal)" aria-hidden="true">${initials(h.member.name)}</span><div><div class="deal">${esc(h.member.name)}</div><div class="small">${h.member.status==="active"?"Active":"Invite pending"}</div></div><button class="linkbtn" data-action="ho-rm-member">Remove</button></div></div>`
       : `<p class="small">No household member.${h.self&&state.changesUsed?` <button class="linkbtn" data-action="ho-restore-change">Give back their household change</button>`:""}</p>`}
     <h3>Redemptions</h3>
-    ${hist.length ? `<div class="list hist">${hist.map(({r,i})=>{const o=ALLBIZ.find(x=>x.id===r.offerId); const d=new Date(r.ts);
+    ${hist.length ? `<div class="list hist">${hist.map(({r,i})=>{const o=dealById(r.offerId)||{biz:"Removed deal",deal:"",color:"#888"}; const d=new Date(r.ts);
       return `<div class="row" style="grid-template-columns:46px 1fr auto">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${esc(o.deal)}</div><div class="small">${fmtDay(d)}, ${d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}${r.by?` · ${esc(r.by.split(" ")[0])}`:""}</div></div>
         <button class="copy" data-action="ho-undo" data-i="${i}" style="margin:0">Undo</button></div>`;}).join("")}</div>` : `<div class="list"><div class="empty">No deals used yet.</div></div>`}
     <p class="small" style="margin-top:8px">Undo gives the deal back, for example if it was used by mistake or the cashier didn’t honor it.</p>
@@ -1277,7 +1354,7 @@ function sheetHolder(p, note){
     <button class="linkbtn" data-action="close" style="display:block;margin:16px auto 0">Done</button>`);
 }
 function sheetUndo(i){
-  const h = findHolder(ui.holder); const r = h.redemptions[i]; const o = ALLBIZ.find(x=>x.id===r.offerId);
+  const h = findHolder(ui.holder); const r = h.redemptions[i]; const o = dealById(r.offerId)||{biz:"Removed deal",deal:"",color:"#888"};
   openSheet(`<h2 style="margin-top:0">Undo this redemption?</h2>
     <p><strong>${o.biz}</strong>: ${esc(o.deal)}, used ${fmtDay(new Date(r.ts))}. ${esc(h.name.split(" ")[0])} will be able to use it again.</p>
     <label class="f">Reason</label>
@@ -1343,7 +1420,7 @@ function sheetEmail(kind, id){
     const first = esc(state.name.split(" ")[0]);
     meta = `<b>From:</b> ${esc(FROM)}<br><b>To:</b> ${esc(state.email)}<br><b>Subject:</b> You’re Pass No. ${state.passNo}. Thanks for backing ${ORG}!`;
     body = `<h4>Thanks, ${first}! You’re Pass No. ${state.passNo}.</h4>
-      <p>Your Advantage Pass is ready. Use it at ${OFFERS.length} local businesses through Aug 31, 2027.</p>
+      <p>Your Advantage Pass is ready. Use it at ${bizNames(fanOffers()).length} local businesses through Aug 31, 2027.</p>
       <table><tr><td>Advantage Pass 2026–27</td><td>$${PRICE}.00</td></tr><tr><td>Supporting</td><td>${esc(state.team)}</td></tr><tr><td>Program</td><td>${ORG}</td></tr><tr><td>Paid</td><td>Visa ending 4242</td></tr></table>
       <a class="mbtn" href="#pass" data-action="close">Open my pass</a>
       <p style="font-size:14px;color:#4b5563">This button signs you in on any phone. No password needed. Want your spouse or partner on the pass too? Add them from My pass.</p>`;
@@ -1441,7 +1518,7 @@ function sheetOffer(id){
   openSheet(`${logo(o)}
     <div class="bigdeal">${o.deal}</div>
     <div style="font-weight:700">${o.biz}</div>
-    <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Where</dt><dd>${o.addr}</dd><dt>Details</dt><dd>${o.fine}</dd><dt>Expires</dt><dd>Aug 31, 2027</dd></dl>
+    <dl class="meta"><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>For</dt><dd>${teamsText(o)}</dd><dt>Where</dt><dd>${o.addr}</dd><dt>Details</dt><dd>${o.fine}</dd><dt>Expires</dt><dd>Aug 31, 2027</dd></dl>
     ${cta}
     <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Close</button>`);
 }
@@ -1544,7 +1621,41 @@ document.addEventListener("click", e=>{
     state.redemptions.push({offerId:t.dataset.id, ts:Date.now(), by}); save();
     showRedeemed(t.dataset.id);
   }
-  if(a==="biz-edit"){ sheetBizEdit(); return; }
+  if(a==="biz-edit"){ sheetDealEdit(ui.biz); return; }
+  if(a==="deal-new"){ sheetDealEdit(null); return; }
+  if(a==="deal-edit"){ sheetDealEdit(t.dataset.id); return; }
+  if(a==="biz-info"){ sheetBizInfo(); return; }
+  if(a==="biz-info-save"){ state.edits[ui.biz] = Object.assign({}, state.edits[ui.biz], {addr:clean(document.getElementById("bi-addr").value)}); save(); render(); closeSheet(); return; }
+  if(a==="deal-save"){
+    const err = m=>{ const e = document.getElementById("dl-err"); e.textContent = m; e.style.display = "block"; };
+    const deal = clean(document.getElementById("dl-deal").value), limit = document.getElementById("dl-limit").value, fine = clean(document.getElementById("dl-fine").value), sports = readTeams();
+    if(!deal) return err("Describe the deal.");
+    if(!sports) return err("Pick at least one team, or All teams.");
+    const id = t.dataset.id;
+    if(!id){
+      state.deals.push({id:"d"+Date.now(), bizId:ui.biz, deal, limit, fine, value:5, sports, status:"pending", ts:Date.now()});
+      save(); render(); toast("Sent for approval. It goes live once the program approves it."); return;
+    }
+    const d = dealById(id);
+    if(!d.primary && d.dealStatus==="pending"){ applyDeal(id,{deal,limit,fine,sports}); save(); render(); toast("Updated. Still waiting for approval."); return; }
+    applyDeal(id,{fine});
+    state.pending = state.pending.filter(p=>!(p.type==="change" && p.offerId===id));
+    let msg = "Saved. Your changes are live.";
+    const same = deal===d.deal && limit===d.limit && JSON.stringify(sports)===JSON.stringify(d.sports);
+    const better = deal===d.deal && GENEROSITY[limit]>=GENEROSITY[d.limit] && teamsSuperset(sports, d.sports);
+    if(!same && better){ applyDeal(id,{limit, sports}); msg = "Saved. Your deal now reaches more fans."; }
+    else if(!same){ state.pending.push({pid:"p"+Date.now(), type:"change", offerId:id, ts:Date.now(), proposed:{deal,limit,sports}}); msg = "Sent for approval. Your current deal stays up until it’s approved."; }
+    save(); render(); toast(msg); return;
+  }
+  if(a==="deal-remove"){
+    const d = dealById(t.dataset.id);
+    if(d.dealStatus==="pending"){ state.deals = state.deals.filter(x=>x.id!==d.id); save(); render(); closeSheet(); return; }
+    state.pending = state.pending.filter(p=>!(p.type==="change" && p.offerId===d.id));
+    state.pending.push({pid:"p"+Date.now(), type:"change", offerId:d.id, ts:Date.now(), proposed:{remove:true}});
+    save(); render(); toast("Sent for approval. The deal stays up until it’s approved."); return;
+  }
+  if(a==="adm-deal-approve"){ state.deals.find(x=>x.id===t.dataset.id).status = "live"; save(); render(); return; }
+  if(a==="adm-deal-decline"){ state.deals = state.deals.filter(x=>x.id!==t.dataset.id); save(); render(); return; }
   if(a==="biz-save"){
     const o = OFFERS.find(x=>x.id===ui.biz);
     const deal = clean(document.getElementById("ed-deal").value), limit = document.getElementById("ed-limit").value;
@@ -1568,13 +1679,17 @@ document.addEventListener("click", e=>{
   if(a==="biz-setup-send"){
     const o = state.added.find(x=>x.id===ui.biz); const g = id=>clean(document.getElementById(id).value);
     const deal = g("sd-deal"); if(!deal){ document.getElementById("sd-deal").focus(); return; }
-    Object.assign(o,{deal, limit:document.getElementById("sd-limit").value, fine:g("sd-fine")||"See store for details.", addr:g("sd-addr")||o.addr, status:"submitted", submitted:Date.now()});
+    const allB = document.querySelector(".tm-all"); const tms = allB.checked ? "all" : [...document.querySelectorAll(".tm:checked")].map(x=>x.value);
+    Object.assign(o,{sports: tms.length ? tms : "all", deal, limit:document.getElementById("sd-limit").value, fine:g("sd-fine")||"See store for details.", addr:g("sd-addr")||o.addr, status:"submitted", submitted:Date.now()});
     save(); render(); window.scrollTo(0,0); return;
   }
   if(a==="adm-approve" || a==="adm-decline"){
     const p = state.pending.find(x=>x.pid===t.dataset.pid); if(!p) return;
     state.pending = state.pending.filter(x=>x!==p);
-    if(a==="adm-approve") state.edits[p.offerId] = Object.assign({}, state.edits[p.offerId], {deal:p.proposed.deal, limit:p.proposed.limit});
+    if(a==="adm-approve"){
+      if(p.proposed.remove) state.deals = state.deals.filter(x=>x.id!==p.offerId);
+      else applyDeal(p.offerId, Object.assign({deal:p.proposed.deal, limit:p.proposed.limit}, p.proposed.sports?{sports:p.proposed.sports}:{}));
+    }
     save(); render(); return;
   }
   if(a==="adm-new-approve" || a==="adm-new-decline"){
@@ -1616,7 +1731,7 @@ document.addEventListener("click", e=>{
   if(a==="ho-undo"){ sheetUndo(+t.dataset.i); return; }
   if(a==="undo-reason"){ ui.undoReason = t.dataset.r; document.querySelectorAll('[data-action="undo-reason"]').forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }
   if(a==="ho-undo-confirm"){
-    const h = findHolder(ui.holder); const i = +t.dataset.i; const r = h.redemptions[i]; const o = ALLBIZ.find(x=>x.id===r.offerId);
+    const h = findHolder(ui.holder); const i = +t.dataset.i; const r = h.redemptions[i]; const o = dealById(r.offerId)||{biz:"Removed deal",deal:"",color:"#888"};
     h.redemptions.splice(i,1);
     holderLog(h, `Undid ${o.biz} (${fmtDay(new Date(r.ts))}): ${ui.undoReason}`);
     save(); render(); sheetHolder(ui.holder, `${o.biz} deal given back.`); return;
@@ -1769,6 +1884,10 @@ function renderLanding(){
   </div>`;
 }
 
+document.addEventListener("change", e=>{
+  if(!e.target.classList || !e.target.classList.contains("tm-all")) return;
+  const box = e.target.closest(".list"); box.querySelectorAll(".tm").forEach(x=>{ x.disabled = e.target.checked; if(e.target.checked) x.checked = false; });
+});
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".scrim")) closeSheet(); });
 window.addEventListener("hashchange", ()=>{ if(!SCHOOL) return; route(); window.scrollTo(0,0); });
 if(SCHOOL){
