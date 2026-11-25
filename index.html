@@ -206,8 +206,8 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .csvbox code{font-size:12px;word-break:break-word}
 /* Team branding */
 .tlogo{width:34px;height:34px;object-fit:contain;flex:none}
-.hero{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:22px;margin:16px 0 4px;background:var(--chip)}
-.hero-slot{display:grid;place-items:center;gap:6px;text-align:center;width:100%;aspect-ratio:16/9;border:1.5px dashed var(--line);border-radius:22px;margin:16px 0 4px;color:var(--muted);background:var(--surface);font-weight:700;font-size:14px;padding:16px}
+.hero{display:block;width:100%;aspect-ratio:1120/600;object-fit:cover;border-radius:22px;margin:16px 0 4px;background:var(--chip)}
+.hero-slot{display:grid;place-items:center;gap:6px;text-align:center;width:100%;aspect-ratio:1120/600;border:1.5px dashed var(--line);border-radius:22px;margin:16px 0 4px;color:var(--muted);background:var(--surface);font-weight:700;font-size:14px;padding:16px}
 .brandgrid{display:grid;grid-template-columns:1fr 1.6fr;gap:12px;margin:10px 0 6px}
 .btile{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;text-align:center}
 .btile .pv{display:grid;place-items:center;height:86px;border-radius:12px;background:var(--chip);margin-bottom:10px;overflow:hidden;color:var(--muted);font-size:13px;font-weight:700}
@@ -216,6 +216,14 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .btile label{display:inline-block;cursor:pointer}
 .btile input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
 .mh img{width:26px;height:26px;object-fit:contain;background:#fff;border-radius:6px;padding:2px}
+/* Sponsors */
+.slot img{max-width:85%;max-height:80%;object-fit:contain}
+.slot.filled{border-style:solid;border-color:var(--line)}
+.pass-by img{height:24px;max-width:120px;object-fit:contain;background:#fff;border-radius:6px;padding:2px 6px}
+.sptile{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.sptile .pv{height:56px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;color:#888;font-size:12px;font-weight:700}
+.sptile .pv img{max-width:90%;max-height:85%;object-fit:contain}
+.sptile input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
 /* Wallet + email previews */
 .walletbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 4px}
 .wbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:#000;color:#fff;border:0;border-radius:12px;padding:11px 8px;font-weight:700;font-size:14px;cursor:pointer;line-height:1.15;text-align:left}
@@ -489,8 +497,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{},deals:JSON.parse(JSON.stringify(SEED_DEALS))});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{},deals:JSON.parse(JSON.stringify(SEED_DEALS))};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{},sponsors:{presenting:{},partners:[]},deals:JSON.parse(JSON.stringify(SEED_DEALS))});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{},sponsors:{presenting:{},partners:[]},deals:JSON.parse(JSON.stringify(SEED_DEALS))};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -525,7 +533,7 @@ function passCard(sample){
     <div class="pass-top"><span>Advantage Pass</span><span>2026–27</span></div>
     <div class="pass-num"><span class="no">No.</span>${num}</div>
     <div class="pass-who"><strong>${name}${!sample&&state.member&&state.member.status==="active"?` + ${esc(state.member.name.split(" ")[0])}`:""}</strong><span>${team}</span></div>
-    <div class="pass-by">Presented by <span>Your logo here</span></div>
+    <div class="pass-by">Presented by ${SP().presenting.logo ? `<img src="${SP().presenting.logo}" alt="${esc(SP().presenting.name||"Presenting partner")}">` : SP().presenting.name ? `<b>${esc(SP().presenting.name)}</b>` : `<span>Your logo here</span>`}</div>
   </div>`;
 }
 
@@ -534,12 +542,15 @@ function BR(){ const b = state.brand||{}, sc = b.school||{}, sp = (SPORT && b[SP
 function brandTarget(scope){ const id = scope || (SPORT ? SPORT.id : "school"); state.brand[id] = state.brand[id]||{}; return state.brand[id]; }
 function header(){ const L = SCHOOL && BR().logo; return `<div class="top">${L?`<img class="tlogo" src="${L}" alt="">`:SHIELD}${ORG}</div>`; }
 
+function SP(){ const s0 = (state.sponsors = state.sponsors || {presenting:{}, partners:[]}); s0.partners = s0.partners||[]; s0.presenting = s0.presenting||{}; return s0; }
 function partners(){
+  const sp = SP(), pr = sp.presenting, list = sp.partners.filter(p=>p.logo||p.name);
+  const box = (p, big)=>`<div class="slot${big?" big":""}${p.logo||p.name?" filled":""}">${p.logo?`<img src="${p.logo}" alt="${esc(p.name||"Partner")}">`:esc(p.name||(big?"Presenting Partner logo":"Partner logo"))}</div>`;
   return `<section class="partners" aria-label="Platform Partners">
     <p class="lbl">Presented by</p>
-    <div class="slot big">Presenting Partner logo</div>
+    ${box(pr,true)}
     <p class="lbl">Conference Partners</p>
-    <div class="slots"><div class="slot">Partner logo</div><div class="slot">Partner logo</div><div class="slot">Partner logo</div></div>
+    <div class="slots">${(list.length ? list : [{},{},{}]).map(p=>box(p,false)).join("")}</div>
   </section>`;
 }
 
@@ -967,6 +978,24 @@ function playerLink(t){
   const base = location.origin + sportPath(sp ? sp.id : "");
   return m ? `${base}?player=${m[1]}` : base;
 }
+function spSlot(slot){ const sp = SP(); if(slot==="presenting") return sp.presenting; const i = +slot.slice(1); sp.partners[i] = sp.partners[i]||{}; return sp.partners[i]; }
+function sponsorsCard(){
+  const sp = SP();
+  const tile = (p, slot, label)=>`<div class="sptile"><div class="pv">${p.logo?`<img src="${p.logo}" alt="">`:"No logo"}</div>
+    <div><input class="field sp-name" data-slot="${slot}" value="${esc(p.name||"")}" placeholder="${label} name" style="margin-bottom:8px;padding:9px 12px">
+      <span style="display:flex;gap:12px;align-items:center"><label class="copy" style="margin:0;cursor:pointer">${p.logo?"Change":"Upload"} logo<input type="file" accept="image/*" class="sp-up" data-slot="${slot}"></label>
+      ${p.logo||p.name?`<button class="linkbtn" data-action="sp-rm" data-slot="${slot}" style="font-size:13px;padding:0">Remove</button>`:""}</span></div></div>`;
+  return `<h3>Sponsors & partners</h3>
+    <div class="goal" style="margin-top:0">
+      <strong>Presenting partner</strong>
+      <p class="small" style="margin:4px 0 0">Shown on every pass card (“Presented by”) and at the top of the partner section.</p>
+      ${tile(sp.presenting,"presenting","Presenting partner")}
+      <strong style="display:block;margin-top:14px">Conference partners</strong>
+      <p class="small" style="margin:4px 0 0">Shown in the partner section on every page.</p>
+      ${sp.partners.map((p,i)=>tile(p,"p"+i,"Partner")).join("") || `<p class="small" style="margin:8px 0">No partners yet.</p>`}
+      ${sp.partners.length<9?`<button class="btn ghost" data-action="sp-add" style="margin-top:10px;padding:12px">+ Add a partner</button>`:""}
+    </div>`;
+}
 function themeCard(scope){
   const sp = SPORTS.find(x=>x.id===scope);
   const th = (ui.themeDraft && ui.themeDraft.scope===scope) ? ui.themeDraft.th : themeFor(scope);
@@ -999,6 +1028,10 @@ function brandingCard(scope){
         ${b[k]?`<button class="linkbtn" data-action="brand-rm" data-k="${k}" data-scope="${scope}" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>`;
   return `<h3 style="margin-top:6px">${sp ? sp.name : `${SC.mascot} school-wide`} branding</h3>
     <div class="brandgrid">${tile("logo","Logo","")}${tile("photo","Team photo","cover")}</div>
+    <div class="csvbox" style="margin-top:4px"><b>Recommended sizes</b><br>
+      <b>Team photo:</b> 1120 × 600 px (landscape), JPG, under 500 KB<br>
+      <b>Logo:</b> 512 × 512 px (square), PNG with a transparent background<br>
+      <span class="small">Larger files are resized and compressed automatically.</span></div>
     <p class="small">${sp ? `Shows on the ${sp.name} page, Wallet card and emails. If you skip it, the school’s logo and photo are used.` : "Used on the school’s team picker and for any team that hasn’t added its own."}</p>`;
 }
 function adminTeams(){
@@ -1302,6 +1335,7 @@ function viewAdmin(){
     <p class="small" style="margin-top:12px">Admins add each business with its signed agreement. The business gets a link to set up its deal, and it goes live after approval.</p>
     ${brandingCard("school")}
     ${themeCard("school")}
+    ${sponsorsCard()}
     ${partners()}
   </div>`;
 }
@@ -1377,14 +1411,30 @@ function shrinkImage(file, max, type){
     fr.readAsDataURL(file);
   });
 }
+function loadImg(file){ return new Promise((res,rej)=>{ const fr = new FileReader(); fr.onerror = rej; fr.onload = ()=>{ const i = new Image(); i.onload = ()=>res(i); i.onerror = rej; i.src = fr.result; }; fr.readAsDataURL(file); }); }
+async function processPhoto(file){
+  const img = await loadImg(file);
+  const W = 1120, H = 600, sc = Math.min(1, W/img.width);
+  const c = document.createElement("canvas"); c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  let q = .85, url = c.toDataURL("image/jpeg", q);
+  while(url.length*0.75 > 500*1024 && q > .4){ q -= .1; url = c.toDataURL("image/jpeg", q); }
+  const kb = Math.round(url.length*0.75/1024), ratio = img.width/img.height;
+  const notes = [];
+  if(img.width < W || img.height < H) notes.push(`it’s smaller than 1120 × 600, so it may look soft`);
+  if(Math.abs(ratio - W/H) > .25) notes.push(`it isn’t landscape 1120 × 600, so the edges will be trimmed to fit`);
+  return {url, msg:`Team photo updated (${c.width} × ${c.height}, ${kb} KB).${notes.length?` Heads up: ${notes.join(" and ")}.`:""}`};
+}
 async function uploadBrand(k, file, scope){
   if(!file) return;
   if(!/^image\//.test(file.type)){ toast("Please choose an image file."); return; }
   try{
-    const url = await shrinkImage(file, k==="logo"?256:1400, k==="logo"?"image/png":"image/jpeg");
+    let url, msg;
+    if(k==="photo"){ const r = await processPhoto(file); url = r.url; msg = r.msg; }
+    else { url = await shrinkImage(file, 512, "image/png"); const im = await loadImg(file); msg = `Logo updated.${Math.abs(im.width/im.height-1)>.2?" Heads up: square logos look best.":""}`; }
     const tg = brandTarget(scope); const prev = tg[k]; tg[k] = url; save();
     if(!localStorage.getItem(KEY) || !localStorage.getItem(KEY).includes(url.slice(-40))){ tg[k] = prev; save(); toast("That image is too large for the demo. Try a smaller one."); return; }
-    render(); toast(k==="logo" ? "Logo updated." : "Team photo updated.");
+    render(); toast(msg);
   }catch(e){ toast("Couldn’t read that image. Try a JPG or PNG."); }
 }
 
@@ -1583,6 +1633,12 @@ function render(){
   if(iu) iu.addEventListener("change", e=>{ const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=>sheetImport(parseICS(String(fr.result), SPORT)); fr.readAsText(f); e.target.value=""; });
   const cu = document.getElementById("csv-up");
   if(cu) cu.addEventListener("change", e=>{ const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=>sheetImport(importCSV(String(fr.result))); fr.readAsText(f); e.target.value=""; });
+  document.querySelectorAll("input.sp-up").forEach(el=>el.addEventListener("change", async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    try{ const url = await shrinkImage(f, 480, "image/png"); spSlot(el.dataset.slot).logo = url; save(); render(); toast("Logo updated."); }
+    catch(err){ toast("Couldn’t read that image. Try a JPG or PNG."); }
+  }));
+  document.querySelectorAll("input.sp-name").forEach(el=>el.addEventListener("change", e=>{ spSlot(el.dataset.slot).name = clean(e.target.value); save(); }));
   document.querySelectorAll("input.up").forEach(el=>el.addEventListener("change", e=>uploadBrand(el.dataset.k, e.target.files[0], el.dataset.scope)));
   const hs = document.getElementById("hsearch");
   if(hs) hs.addEventListener("input", e=>{ ui.hq=e.target.value; document.getElementById("hlist").innerHTML = holderRows(); });
@@ -1751,6 +1807,8 @@ document.addEventListener("click", e=>{
     const scope = t.dataset.scope; state.theme = state.theme||{}; delete state.theme[scope];
     ui.themeDraft = null; save(); setThemeVars(themeFor(SPORT ? SPORT.id : "school")); render(); return;
   }
+  if(a==="sp-add"){ SP().partners.push({}); save(); render(); return; }
+  if(a==="sp-rm"){ const slot = t.dataset.slot; if(slot==="presenting") SP().presenting = {}; else SP().partners.splice(+slot.slice(1),1); save(); render(); return; }
   if(a==="brand-rm"){ delete brandTarget(t.dataset.scope)[t.dataset.k]; save(); render(); return; }
   if(a==="sched"){ sheetSchedule(); return; }
   if(a==="ical-save"){
