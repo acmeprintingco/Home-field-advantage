@@ -189,6 +189,18 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .biz-head{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
 .biz-head .logo{width:58px;height:58px;font-size:20px;flex:none}
 .youbadge{display:inline-block;font-size:12px;font-weight:800;background:var(--royal);color:var(--royal-ink);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+/* Team branding */
+.tlogo{width:34px;height:34px;object-fit:contain;flex:none}
+.hero{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:22px;margin:16px 0 4px;background:var(--chip)}
+.hero-slot{display:grid;place-items:center;gap:6px;text-align:center;width:100%;aspect-ratio:16/9;border:1.5px dashed var(--line);border-radius:22px;margin:16px 0 4px;color:var(--muted);background:var(--surface);font-weight:700;font-size:14px;padding:16px}
+.brandgrid{display:grid;grid-template-columns:1fr 1.6fr;gap:12px;margin:10px 0 6px}
+.btile{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;text-align:center}
+.btile .pv{display:grid;place-items:center;height:86px;border-radius:12px;background:var(--chip);margin-bottom:10px;overflow:hidden;color:var(--muted);font-size:13px;font-weight:700}
+.btile .pv img{max-width:100%;max-height:100%;object-fit:contain}
+.btile .pv img.cover{width:100%;height:100%;object-fit:cover}
+.btile label{display:inline-block;cursor:pointer}
+.btile input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.mh img{width:26px;height:26px;object-fit:contain;background:#fff;border-radius:6px;padding:2px}
 /* Wallet + email previews */
 .walletbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 4px}
 .wbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:#000;color:#fff;border:0;border-radius:12px;padding:11px 8px;font-weight:700;font-size:14px;cursor:pointer;line-height:1.15;text-align:left}
@@ -366,8 +378,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[]});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[]};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{}});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{}};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -406,7 +418,8 @@ function passCard(sample){
   </div>`;
 }
 
-const header = `<div class="top"><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" style="fill:var(--c-main);stroke:var(--c-acc)" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" style="fill:var(--c-acc2)"/></svg>${ORG}</div>`;
+const SHIELD = `<svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" style="fill:var(--c-main);stroke:var(--c-acc)" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" style="fill:var(--c-acc2)"/></svg>`;
+function header(){ const L = SCHOOL && state.brand && state.brand.logo; return `<div class="top">${L?`<img class="tlogo" src="${L}" alt="">`:SHIELD}${ORG}</div>`; }
 
 function partners(){
   return `<section class="partners" aria-label="Platform Partners">
@@ -447,7 +460,9 @@ function renderWelcome(){
 
 /* ---------- Views ---------- */
 function viewBuy(){
-  return `<div class="wrap">${header}
+  return `<div class="wrap">${header()}
+    ${state.brand.photo ? `<img class="hero" src="${state.brand.photo}" alt="${ORG} team photo">`
+      : `<div class="hero-slot"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Team photo goes here<span class="small" style="font-weight:500">Coaches add it from the Coach tab</span></div>`}
     <h1>Back the teams. Save all year.</h1>
     <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports ${SCHOOL_FULL}.</p>
     ${passCard(true)}
@@ -474,7 +489,7 @@ function viewBuy(){
 function viewPass(){
   const saved = state.redemptions.reduce((s,r)=>s+(OFFERS.find(o=>o.id===r.offerId)?.value||0),0);
   const hist = [...state.redemptions].reverse();
-  return `<div class="wrap">${header}
+  return `<div class="wrap">${header()}
     ${passCard(false)}
     <div class="stats">
       <div class="stat"><b>$${saved}</b><span class="small">Saved so far</span></div>
@@ -497,7 +512,7 @@ function viewPass(){
 }
 
 function viewOffers(){
-  return `<div class="wrap">${header}
+  return `<div class="wrap">${header()}
     <h2>Offers</h2>
     ${state.purchased ? "" : `<div class="banner"><span>Get a pass to redeem these deals.</span><a class="btn" href="#pass">Get a pass</a></div>`}
     <input class="field search" id="q" type="search" placeholder="Search businesses or deals" value="${esc(ui.q)}" aria-label="Search offers">
@@ -547,8 +562,18 @@ function viewCoach(){
   const rows = Object.entries(s).sort((a,b)=>b[1]-a[1]);
   const top = rows[0][1];
   const redeemed = Object.values(BIZSTATS).reduce((a,b)=>a+b[1],0) + state.redemptions.length;
-  return `<div class="wrap">${header}
+  return `<div class="wrap">${header()}
     <p class="kicker">Coach dashboard</p>
+    <h3 style="margin-top:6px">Team branding</h3>
+    <div class="brandgrid">
+      <div class="btile"><div class="pv">${state.brand.logo?`<img src="${state.brand.logo}" alt="Team logo">`:"No logo yet"}</div>
+        <label class="copy" style="margin:0">${state.brand.logo?"Change":"Upload"} logo<input type="file" accept="image/*" id="up-logo"></label>
+        ${state.brand.logo?`<button class="linkbtn" data-action="brand-rm" data-k="logo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
+      <div class="btile"><div class="pv">${state.brand.photo?`<img class="cover" src="${state.brand.photo}" alt="Team photo">`:"No team photo yet"}</div>
+        <label class="copy" style="margin:0">${state.brand.photo?"Change":"Upload"} team photo<input type="file" accept="image/*" id="up-photo"></label>
+        ${state.brand.photo?`<button class="linkbtn" data-action="brand-rm" data-k="photo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
+    </div>
+    <p class="small">The logo shows in the app header, on the Wallet card and in emails. The team photo sits at the top of your pass page.</p>
     <h2 style="margin-top:0">Season fundraiser</h2>
     <div class="stats">
       <div class="stat"><b>$${raised.toLocaleString()}</b><span class="small">Raised</span></div>
@@ -579,7 +604,7 @@ function viewBiz(){
   const o = ALLBIZ.find(x=>x.id===ui.biz);
   const signedIn = `<div class="supporting" style="margin-top:18px;display:flex;justify-content:space-between;gap:10px;align-items:center"><span>Signed in as ${esc(o.owner||"the owner")} · ${o.biz}</span></div>`;
   const demoNote = `<p class="small" style="margin-top:20px">Demo: business owners only ever see their own business. To view a different one, open it from the Admin tab.</p>`;
-  if(o.status==="invited") return `<div class="wrap">${header}<p class="kicker">Business view</p>${signedIn}
+  if(o.status==="invited") return `<div class="wrap">${header()}<p class="kicker">Business view</p>${signedIn}
     <h2>Set up your deal</h2>
     <p class="lede">${ORG} added ${o.biz} as a ${o.contract.level}. Tell pass holders what they get. The program reviews it before it goes live.</p>
     <label class="f" for="sd-deal">Your deal</label><input class="field" id="sd-deal" placeholder="e.g. 15% off any bouquet">
@@ -589,7 +614,7 @@ function viewBiz(){
     <label class="f" for="sd-addr">Address</label><input class="field" id="sd-addr" value="${esc(o.addr)}">
     <button class="btn" data-action="biz-setup-send">Submit for approval</button>
     ${demoNote}</div>`;
-  if(o.status==="submitted") return `<div class="wrap">${header}<p class="kicker">Business view</p>${signedIn}
+  if(o.status==="submitted") return `<div class="wrap">${header()}<p class="kicker">Business view</p>${signedIn}
     <h2>Thanks, you’re almost live</h2>
     <p class="lede">The program is reviewing your deal. We’ll text you when it’s on the pass.</p>
     <dl class="meta"><dt>Deal</dt><dd><strong>${esc(o.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd></dl>
@@ -601,7 +626,7 @@ function viewBiz(){
     ...state.redemptions.filter(r=>r.offerId===o.id).map(r=>({ts:r.ts,pass:state.passNo})).reverse(),
     ...(BIZSTATS[o.id] ? [{ts:now-2.2*3600e3,pass:"214"},{ts:now-26*3600e3,pass:"187"},{ts:now-31*3600e3,pass:"342"},{ts:now-3.1*86400e3,pass:"129"}] : [])
   ].slice(0,5);
-  return `<div class="wrap">${header}
+  return `<div class="wrap">${header()}
     <p class="kicker">Business view</p>
     ${signedIn}
     <div class="biz-head">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Your deal: ${esc(o.deal)}</div></div></div>
@@ -689,7 +714,7 @@ function viewAdmin(){
   const changes = state.pending;
   const ready = ALLBIZ.filter(o=>o.status==="submitted");
   const n = changes.length + ready.length;
-  return `<div class="wrap">${header}
+  return `<div class="wrap">${header()}
     <p class="kicker">Admin</p>
     <h2 style="margin-top:0">Approvals${n?` (${n})`:""}</h2>
     ${ready.map(o=>`<div class="goal"><span class="tag">New deal</span>
@@ -776,6 +801,30 @@ function sheetUndo(i){
 }
 function holderLog(h, text){ const entry = {ts:Date.now(), text}; if(h.self) state.selfLog.push(entry); else h.log.push(entry); }
 
+/* ---------- Team branding uploads ---------- */
+function shrinkImage(file, max, type){
+  return new Promise((res, rej)=>{
+    const fr = new FileReader();
+    fr.onerror = rej;
+    fr.onload = ()=>{ const img = new Image(); img.onerror = rej;
+      img.onload = ()=>{ const sc = Math.min(1, max/Math.max(img.width,img.height));
+        const c = document.createElement("canvas"); c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height); res(c.toDataURL(type, .82)); };
+      img.src = fr.result; };
+    fr.readAsDataURL(file);
+  });
+}
+async function uploadBrand(k, file){
+  if(!file) return;
+  if(!/^image\//.test(file.type)){ toast("Please choose an image file."); return; }
+  try{
+    const url = await shrinkImage(file, k==="logo"?256:1400, k==="logo"?"image/png":"image/jpeg");
+    const prev = state.brand[k]; state.brand[k] = url; save();
+    if(!localStorage.getItem(KEY) || !localStorage.getItem(KEY).includes(url.slice(-40))){ state.brand[k] = prev; save(); toast("That image is too large for the demo. Try a smaller one."); return; }
+    render(); toast(k==="logo" ? "Logo updated." : "Team photo updated.");
+  }catch(e){ toast("Couldn’t read that image. Try a JPG or PNG."); }
+}
+
 /* ---------- Wallet + email previews ---------- */
 const FROM = "Home Field Advantage <passes@homefieldadvantage.deals>";
 function sheetWallet(w){
@@ -784,7 +833,7 @@ function sheetWallet(w){
   openSheet(`<h2 style="margin-top:0">${w==="apple"?"Apple":"Google"} Wallet</h2>
     <p class="small">This is the card that gets added to their phone.</p>
     <div class="wcard">
-      <div class="wtop"><span>Home Field Advantage</span><span>2026–27</span></div>
+      <div class="wtop"><span style="display:flex;align-items:center;gap:8px">${state.brand.logo?`<img src="${state.brand.logo}" alt="" style="width:26px;height:26px;object-fit:contain;background:#fff;border-radius:6px;padding:2px">`:""}Home Field Advantage</span><span>2026–27</span></div>
       <div class="wnum">No. ${state.passNo}</div>
       <div class="wf">
         <div><span>Pass holder</span><b>${esc(state.name)}${state.member&&state.member.status==="active"?` + ${esc(state.member.name.split(" ")[0])}`:""}</b></div>
@@ -823,7 +872,7 @@ function sheetEmail(kind, id){
   }
   openSheet(`<h2 style="margin-top:0">Email preview</h2>
     <div class="mailmeta">${meta}</div>
-    <div class="mail"><div class="mh">${shield}${ORG}</div><div class="mb">${body}</div>
+    <div class="mail"><div class="mh">${state.brand.logo?`<img src="${state.brand.logo}" alt="">`:shield}${ORG}</div><div class="mb">${body}</div>
       <div class="mf">Home Field Advantage · homefieldadvantage.deals<br>You’re getting this because of your Advantage Pass.</div></div>
     <p class="test" style="margin-top:14px">Demo preview. In the live app this is sent automatically.</p>
     <button class="btn" data-action="close">Done</button>`);
@@ -960,6 +1009,7 @@ function render(){
   const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : ui.view==="admin" ? viewAdmin() : (state.purchased ? viewPass() : viewBuy());
   app.innerHTML = roleBar() + body;
   document.querySelector(".tabs").hidden = ["coach","biz","admin"].includes(ui.view);
+  ["logo","photo"].forEach(k=>{ const el = document.getElementById("up-"+k); if(el) el.addEventListener("change", e=>uploadBrand(k, e.target.files[0])); });
   const hs = document.getElementById("hsearch");
   if(hs) hs.addEventListener("input", e=>{ ui.hq=e.target.value; document.getElementById("hlist").innerHTML = holderRows(); });
   document.getElementById("tab-offers").setAttribute("aria-current", ui.view==="offers"?"page":"false");
@@ -1080,6 +1130,7 @@ document.addEventListener("click", e=>{
     document.getElementById("lead").innerHTML = `<strong>Thanks, ${esc(g("ld-name").split(" ")[0])}!</strong><p class="small" style="margin:6px 0 0">We’ll be in touch about ${esc(g("ld-school")||"your program")} soon. (Demo: this form doesn’t send yet.)</p>`;
     return;
   }
+  if(a==="brand-rm"){ delete state.brand[t.dataset.k]; save(); render(); return; }
   if(a==="wallet"){ sheetWallet(t.dataset.w); return; }
   if(a==="email"){ sheetEmail(t.dataset.e, t.dataset.id); return; }
   if(a==="hh-add"){ sheetHousehold(); return; }
@@ -1106,7 +1157,7 @@ document.addEventListener("click", e=>{
     return;
   }
   if(a==="done"){ clearInterval(clockTimer); document.getElementById("layer").innerHTML=""; render(); }
-  if(a==="reset"){ state = load.blank(); state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
+  if(a==="reset"){ const keepBrand = state.brand; state = load.blank(); state.brand = keepBrand||{}; state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
 });
 /* ---------- Main site (no school picked) ---------- */
 function renderLanding(){
@@ -1115,11 +1166,12 @@ function renderLanding(){
   [["--c-dark","#0A1F44"],["--c-main","#1D4ED8"],["--c-light","#3B82F6"],["--c-acc","#60A5FA"],["--c-acc2","#93C5FD"]].forEach(([k,v])=>st.setProperty(k,v));
   document.querySelector(".tabs").hidden = true;
   const card = id => { const sc = SCHOOLS[id], c = sc.colors;
+    let lg = null; try{ lg = (JSON.parse(localStorage.getItem("hfa-demo-v3-"+id))||{}).brand?.logo; }catch(e){}
     return `<a class="row" href="${sc.path}" style="text-decoration:none;color:inherit;grid-template-columns:52px 1fr auto">
-      <span class="logo" style="width:52px;height:52px;background:linear-gradient(135deg,${c.dark},${c.main} 60%,${c.light});border:2px solid ${c.acc}" aria-hidden="true">${sc.mascot[0]}</span>
+      ${lg?`<img src="${lg}" alt="" style="width:52px;height:52px;object-fit:contain">`:`<span class="logo" style="width:52px;height:52px;background:linear-gradient(135deg,${c.dark},${c.main} 60%,${c.light});border:2px solid ${c.acc}" aria-hidden="true">${sc.mascot[0]}</span>`}
       <div><div class="deal">${sc.name} ${sc.mascot}</div><div class="small">${sc.town}, NE</div></div><span class="small">›</span></a>`; };
   document.getElementById("app").innerHTML = `<div class="wrap">
-    ${header.replace(ORG,"Home Field Advantage")}
+    <div class="top">${SHIELD}Home Field Advantage</div>
     <h1>The fundraising pass your whole town uses.</h1>
     <p class="lede">Fans buy one pass, save at local businesses all season, and every dollar goes to the team. No candy bars, no cookie dough, no app to download.</p>
     <h3>Find your school</h3>
