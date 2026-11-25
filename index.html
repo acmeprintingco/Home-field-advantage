@@ -444,8 +444,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{}});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{}};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -695,6 +695,15 @@ function scheduleCoachSection(){
   const all = scheduleOf(SPORT);
   return `<h3 style="display:flex;justify-content:space-between;align-items:center">Schedule (${all.length})<button class="copy" data-action="ev-add" style="margin:0">+ Add event</button></h3>
     <div class="goal" style="margin-top:0">
+      <strong>Sync from MaxPreps</strong>
+      <p class="small" style="margin:6px 0 10px">Paste your MaxPreps calendar link once and the schedule stays up to date. Find it in MaxPreps: sign in, open your school or team, and copy the <b>Internet Calendar Feed</b> (iCal) link.</p>
+      ${(state.ical||{})[SPORT.id] ? `<div class="supporting" style="font-weight:600;font-size:14px;word-break:break-all">🔗 Linked: ${esc(state.ical[SPORT.id].url)}<br><span class="small">${state.ical[SPORT.id].last?`Last synced ${fmtDay(new Date(state.ical[SPORT.id].last))}`:"Syncs automatically in the live app"}</span></div>
+        <div class="row2"><button class="btn ghost" data-action="ical-sync" style="padding:12px 8px;font-size:15px">Sync now</button><button class="btn ghost" data-action="ical-unlink" style="padding:12px 8px;font-size:15px">Unlink</button></div>`
+      : `<input class="field" id="ical-url" placeholder="webcal://… or https://…ics" inputmode="url" autocomplete="off">
+        <button class="btn" data-action="ical-save" style="padding:12px 8px;font-size:15px">Link MaxPreps calendar</button>`}
+      <p class="small" style="margin:10px 0 0">Have a calendar file instead? <label class="linkbtn" style="cursor:pointer">Upload .ics file<input type="file" accept=".ics,text/calendar" id="ics-up" style="position:absolute;width:1px;height:1px;opacity:0"></label></p>
+    </div>
+    <div class="goal">
       <strong>Upload your whole schedule</strong>
       <p class="small" style="margin:6px 0 10px">Fill in the template in Excel, Google Sheets or Numbers, save it as a CSV and upload it here.</p>
       <div class="row2">
@@ -706,10 +715,107 @@ function scheduleCoachSection(){
     </div>
     <div class="list">${all.map(e=>evRow(e,true)).join("") || `<div class="empty">No events yet. Add one or upload a CSV.</div>`}</div>`;
 }
+function parseICS(text, sp){
+  const lines = text.replace(/\r\n[ \t]/g,"").replace(/\n[ \t]/g,"").split(/\r?\n/);
+  const evs = []; let cur = null;
+  const unesc = v=>v.replace(/\\n/gi," ").replace(/\\([,;\\])/g,"$1").trim();
+  for(const ln of lines){
+    if(ln==="BEGIN:VEVENT"){ cur = {}; continue; }
+    if(ln==="END:VEVENT"){ if(cur) evs.push(cur); cur = null; continue; }
+    if(!cur) continue;
+    const i = ln.indexOf(":"); if(i<0) continue;
+    const key = ln.slice(0,i), val = ln.slice(i+1), name = key.split(";")[0].toUpperCase();
+    if(name==="DTSTART") cur.start = {val, allDay:/VALUE=DATE(?!-)/i.test(key)||/^\d{8}$/.test(val)};
+    else if(name==="SUMMARY") cur.summary = unesc(val);
+    else if(name==="LOCATION") cur.location = unesc(val);
+    else if(name==="DESCRIPTION") cur.desc = unesc(val);
+  }
+  const errors = []; let events = [];
+  const me = new RegExp(`\\b(${SC.name}|${SC.mascot}|${SC.short})\\b`,"gi");
+  evs.forEach((e,n)=>{
+    if(!e.start || !e.summary){ errors.push(`Event ${n+1}: missing a date or title.`); return; }
+    const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})\d{0,2}(Z)?)?/.exec(e.start.val);
+    if(!m){ errors.push(`“${e.summary}”: date not recognized.`); return; }
+    let d;
+    if(m[6]) d = new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]));
+    else d = new Date(+m[1],+m[2]-1,+m[3],+(m[4]||12),+(m[5]||0));
+    const p = n=>String(n).padStart(2,"0");
+    const time = e.start.allDay || !m[4] ? "" : `${p(d.getHours())}:${p(d.getMinutes())}`;
+    let sum = e.summary, homeAway = "Home", opp = sum, mm;
+    if((mm = /(?:^|\s)(?:@|at)\s+(.+)$/i.exec(sum))){ homeAway = "Away"; opp = mm[1]; }
+    else if((mm = /(?:^|\s)vs\.?\s+(.+)$/i.exec(sum))){ homeAway = "Home"; opp = mm[1]; }
+    opp = opp.replace(me,"").replace(/\b(varsity|jv|junior varsity|freshman)\b/gi,"").replace(new RegExp(sp.name,"i"),"").replace(/^[\s\-–:|]+|[\s\-–:|]+$/g,"").replace(/\s{2,}/g," ") || sum;
+    const res = /\b([WL])\s*(\d+\s*-\s*\d+)/.exec(e.desc||e.summary||"");
+    const meet = /invitational|meet|tournament|championship/i.test(sum);
+    events.push({id:"e"+Date.now()+"_"+n, date:dstr(d), time, opponent:clean(opp), homeAway: /neutral/i.test(e.desc||"") ? "Neutral" : homeAway,
+      location:clean(e.location||""), type: meet ? (/tournament|championship/i.test(sum)?"Tournament":"Meet") : "Game", result: res?`${res[1]} ${res[2].replace(/\s/g,"")}`:"", notes:"", _text:(e.summary+" "+(e.desc||""))});
+  });
+  // a school-wide feed covers every sport, so keep only this team's events when the feed names sports
+  const mine = events.filter(e=>new RegExp(sp.name.replace(/^(boys|girls) /i,""),"i").test(e._text));
+  let note = "";
+  if(mine.length && mine.length < events.length){ note = `Kept ${mine.length} ${sp.name} events from ${events.length} in the school calendar.`; events = mine; }
+  events.forEach(e=>delete e._text);
+  return {events, errors, note};
+}
+function parseRoster(text){
+  const players = [], skipped = [];
+  const GRADE = /^(sr|jr|so|fr|senior|junior|sophomore|freshman|9|10|11|12)\.?$/i;
+  text.split(/\r?\n/).forEach((raw,i)=>{
+    const line = raw.replace(/\u00a0/g," ").trim(); if(!line) return;
+    if(/^(#|no\.?|number)?\s*(player|name|athlete)\b/i.test(line) || /\bname\b.*\b(grade|pos|position|ht|height)\b/i.test(line)) return; // header row
+    let cells = line.split(/\t|\s{2,}|\s*,\s*|\s*\|\s*/).map(c=>c.trim()).filter(Boolean);
+    let num = null, name = null;
+    const isNum = c=>/^#?\d{1,3}$/.test(c);
+    const isName = c=>/[A-Za-z]{2,}/.test(c) && !GRADE.test(c) && !/^[A-Z]{1,3}(\/[A-Z]{1,3})*$/.test(c) && !/\d/.test(c);
+    if(cells.length===1){
+      let m = /^#?(\d{1,3})[\s.\-–]+(.+)$/.exec(line) || null;
+      if(m){ num = m[1]; name = m[2]; }
+      else if((m = /^(.+?)[\s,]+#?(\d{1,3})$/.exec(line))){ name = m[1]; num = m[2]; }
+      if(name) name = name.replace(/\s+(sr|jr|so|fr)\.?(\s.*)?$/i,"");
+    } else {
+      const ni = cells.findIndex(isNum); if(ni>=0) num = cells[ni].replace("#","");
+      name = cells.find((c,k)=>k!==ni && isName(c));
+    }
+    name = name ? clean(name).replace(/\s+/g," ") : "";
+    if(!num || !name){ skipped.push(`Line ${i+1}: “${line.slice(0,40)}” – couldn’t find both a number and a name.`); return; }
+    if(players.some(p=>p.num===String(+num))){ skipped.push(`Line ${i+1}: #${+num} appears twice; kept the first.`); return; }
+    players.push({num:String(+num), name});
+  });
+  return {players, skipped};
+}
+function sheetPasteRoster(){
+  openSheet(`<h2 style="margin-top:0">Paste your roster</h2>
+    <p class="small">On your team’s MaxPreps roster page, select the roster table, copy it, and paste it below. A list from a spreadsheet or typed one per line works too, like <b>22 Jake Lutz</b> or <b>Jake Lutz, 22</b>.</p>
+    <textarea class="field" id="rp-text" rows="9" placeholder="#   Name          Grade   Position\n7   Cole Brandt   Sr.     QB\n22  Jake Lutz     Jr.     RB"></textarea>
+    <button class="btn" data-action="rp-preview">Preview roster</button>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function sheetRosterPreview(res){
+  ui.pendingRoster = res.players;
+  openSheet(`<h2 style="margin-top:0">Roster preview</h2>
+    <p><strong>${res.players.length} player${res.players.length===1?"":"s"}</strong> found.</p>
+    ${res.skipped.length?`<div class="csvbox" style="background:color-mix(in srgb,#B91C1C 10%,var(--surface))"><strong>${res.skipped.length} line${res.skipped.length===1?"":"s"} skipped</strong><br>${res.skipped.slice(0,6).map(esc).join("<br>")}${res.skipped.length>6?`<br>…and ${res.skipped.length-6} more`:""}</div>`:""}
+    ${res.players.length?`<div class="list">${res.players.slice(0,8).map(p=>`<div class="row" style="cursor:default;grid-template-columns:46px 1fr"><span class="logo" style="background:var(--chip);color:var(--royal);font-family:var(--display);font-weight:800">${esc(p.num)}</span><div class="deal">${esc(p.name)}</div></div>`).join("")}</div>
+      ${res.players.length>8?`<p class="small">…and ${res.players.length-8} more</p>`:""}
+      <p class="small" style="margin-top:10px">Players who match a jersey number already on your roster keep the passes credited to them.</p>
+      <div class="row2" style="margin-top:10px"><button class="btn ghost" data-action="rp-apply" data-mode="add">Add to roster</button><button class="btn" data-action="rp-apply" data-mode="replace">Replace roster</button></div>`
+      : `<button class="btn ghost" data-action="rp-back" style="margin-top:10px">Try again</button>`}
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+async function syncICal(first){
+  const link = state.ical[SPORT.id];
+  try{
+    const r = await fetch(link.url, {cache:"no-store"}); if(!r.ok) throw 0;
+    const res = parseICS(await r.text(), SPORT); link.last = Date.now(); save(); sheetImport(res);
+  }catch(e){
+    toast(first ? "MaxPreps calendar linked. In the live app it syncs automatically every few hours. For this demo, use “Upload .ics file” to see an import."
+                : "The demo can’t reach MaxPreps directly from the browser. The live app syncs from our server. For now, use “Upload .ics file.”");
+  }
+}
 function sheetImport(res){
   ui.pendingImport = res.events;
   openSheet(`<h2 style="margin-top:0">Upload schedule</h2>
-    <p><strong>${res.events.length} event${res.events.length===1?"":"s"}</strong> ready to add.</p>
+    <p><strong>${res.events.length} event${res.events.length===1?"":"s"}</strong> ready to add.${res.note?`<br><span class="small">${esc(res.note)}</span>`:""}</p>
     ${res.errors.length?`<div class="csvbox" style="background:color-mix(in srgb,#B91C1C 10%,var(--surface))"><strong>${res.errors.length} row${res.errors.length===1?"":"s"} skipped</strong><br>${res.errors.slice(0,8).map(esc).join("<br>")}${res.errors.length>8?`<br>…and ${res.errors.length-8} more`:""}</div>`:""}
     ${res.events.length?`<div class="list">${res.events.slice(0,5).map(e=>evRow(e)).join("")}</div>${res.events.length>5?`<p class="small">…and ${res.events.length-5} more</p>`:""}
     <div class="row2" style="margin-top:14px"><button class="btn ghost" data-action="csv-apply" data-mode="add">Add to schedule</button><button class="btn" data-action="csv-apply" data-mode="replace">Replace schedule</button></div>`
@@ -906,7 +1012,7 @@ function viewCoach(){
       <div class="bar"><i style="width:${pct}%"></i></div>
       <span class="small">${GOAL-total>0 ? `${GOAL-total} more passes to hit the goal.` : "Goal reached!"}</span></div>
     ${scheduleCoachSection()}
-    <h3 style="display:flex;justify-content:space-between;align-items:center">Roster (${rosterOf(SPORT).length})<button class="copy" data-action="ro-add" style="margin:0">+ Add player</button></h3>
+    <h3 style="display:flex;justify-content:space-between;align-items:center">Roster (${rosterOf(SPORT).length})<span style="display:flex;gap:6px"><button class="copy" data-action="rp-open" style="margin:0">Paste roster</button><button class="copy" data-action="ro-add" style="margin:0">+ Add player</button></span></h3>
     <div class="list">${rosterOf(SPORT).slice().sort((a,b)=>(+a.num)-(+b.num)).map(p=>`<button class="row" data-action="ro-edit" data-id="${p.id}" style="grid-template-columns:46px 1fr auto">
       <span class="logo" style="background:var(--chip);color:var(--royal);font-family:var(--display);font-weight:800" aria-hidden="true">${esc(p.num)}</span>
       <div><div class="deal">${esc(p.name)}</div><div class="small">#${esc(p.num)}${p.contact?` · ${esc(p.contact)}`:""}</div></div><span class="small">Edit</span></button>`).join("") || `<div class="empty">No players yet. Add your roster so each player gets a share link.</div>`}</div>
@@ -1340,6 +1446,8 @@ function render(){
   const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : ui.view==="admin" ? viewAdmin() : (state.purchased ? viewPass() : viewBuy());
   app.innerHTML = roleBar() + body;
   document.querySelector(".tabs").hidden = ["coach","biz","admin"].includes(ui.view);
+  const iu = document.getElementById("ics-up");
+  if(iu) iu.addEventListener("change", e=>{ const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=>sheetImport(parseICS(String(fr.result), SPORT)); fr.readAsText(f); e.target.value=""; });
   const cu = document.getElementById("csv-up");
   if(cu) cu.addEventListener("change", e=>{ const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=>sheetImport(importCSV(String(fr.result))); fr.readAsText(f); e.target.value=""; });
   document.querySelectorAll("input.up").forEach(el=>el.addEventListener("change", e=>uploadBrand(el.dataset.k, e.target.files[0], el.dataset.scope)));
@@ -1465,6 +1573,27 @@ document.addEventListener("click", e=>{
   }
   if(a==="brand-rm"){ delete brandTarget(t.dataset.scope)[t.dataset.k]; save(); render(); return; }
   if(a==="sched"){ sheetSchedule(); return; }
+  if(a==="ical-save"){
+    let url = clean(document.getElementById("ical-url").value).replace(/^webcal:\/\//i,"https://");
+    if(!/^https:\/\/\S+$/i.test(url)){ toast("Paste the full calendar link. It starts with webcal:// or https://"); return; }
+    state.ical = state.ical||{}; state.ical[SPORT.id] = {url, last:null}; save(); render();
+    syncICal(true); return;
+  }
+  if(a==="ical-sync"){ syncICal(false); return; }
+  if(a==="ical-unlink"){ delete state.ical[SPORT.id]; save(); render(); return; }
+  if(a==="rp-open" || a==="rp-back"){ sheetPasteRoster(); return; }
+  if(a==="rp-preview"){ sheetRosterPreview(parseRoster(document.getElementById("rp-text").value)); return; }
+  if(a==="rp-apply"){
+    const incoming = ui.pendingRoster||[], ro = rosterOf(SPORT), byNum = {}; ro.forEach(p=>byNum[p.num]=p);
+    if(t.dataset.mode==="replace"){
+      const next = incoming.map(p=>{ const old = byNum[p.num]; if(old){ const oldL = playerLabel(SPORT,old); const np = Object.assign({}, old, {name:p.name}); relabel(oldL, playerLabel(SPORT,np)); return np; } return {id:"p"+Date.now()+p.num, num:p.num, name:p.name, sold:0}; });
+      ro.filter(p=>!incoming.some(x=>x.num===p.num)).forEach(p=>{ const fk = (state.fundExtra = state.fundExtra||{}); fk[SPORT.id] = (fk[SPORT.id]||0) + (p.sold||0); relabel(playerLabel(SPORT,p), fundLabel(SPORT)); });
+      state.roster[SPORT.id] = next;
+    } else {
+      incoming.forEach(p=>{ const old = byNum[p.num]; if(old){ const oldL = playerLabel(SPORT,old); old.name = p.name; relabel(oldL, playerLabel(SPORT,old)); } else ro.push({id:"p"+Date.now()+p.num, num:p.num, name:p.name, sold:0}); });
+    }
+    ui.pendingRoster = null; rebuildTeams(); save(); render(); toast(`Roster updated: ${rosterOf(SPORT).length} players.`); return;
+  }
   if(a==="ev-add"){ sheetEvent(null); return; }
   if(a==="ev-edit"){ sheetEvent(t.dataset.id); return; }
   if(a==="ev-save"){
