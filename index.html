@@ -545,7 +545,9 @@ function dstr(d){ const p = n=>String(n).padStart(2,"0"); return `${d.getFullYea
 function seedSchedule(sp){
   const opps = OPPONENTS[SCHOOL] || OPPONENTS.tigers; const out = [];
   const meet = sp.id==="track" || sp.id==="wrestling";
-  const start = new Date(); start.setHours(12,0,0,0); start.setDate(start.getDate() - 17 + (sp.id.length % 4));
+  const start = new Date(); start.setHours(12,0,0,0); start.setDate(start.getDate() - 21);
+  const want = meet ? 6 : 5; while(start.getDay()!==want) start.setDate(start.getDate()+1);
+  if(sp.id.includes("basketball")){ start.setDate(start.getDate() + (sp.id.startsWith("girls") ? -3 : 1)); }
   for(let i=0;i<9;i++){
     const d = new Date(start); d.setDate(start.getDate() + i*7);
     const home = i%2===0, opp = opps[(i + sp.id.length) % opps.length];
@@ -599,14 +601,17 @@ function sheetSchedule(){
 const CSV_COLS = ["date","time","opponent","home_away","location","event_type","result","notes"];
 function templateCSV(){
   const sp = SPORT, ex = OPPONENTS[SCHOOL]||OPPONENTS.tigers, y = new Date().getFullYear()+1;
+  const fri = (mo,day,add)=>{ const d = new Date(y,mo-1,day); while(d.getDay()!==(add?6:5)) d.setDate(d.getDate()+1); return d; };
+  const f1 = fri(8,25), f2 = new Date(f1), f3 = new Date(f1); f2.setDate(f1.getDate()+7); f3.setDate(f1.getDate()+14);
+  const s1 = fri(3,10,1), s2 = new Date(s1), s3 = new Date(s1); s2.setDate(s1.getDate()+7); s3.setDate(s1.getDate()+21);
   const meet = sp && (sp.id==="track"||sp.id==="wrestling");
   const rows = [CSV_COLS.join(","),
-    meet ? `${y}-03-14,10:00 AM,${ex[0]} Invitational,Away,${ex[0]} High School,Meet,,Bus leaves 7:30 AM`
-         : `${y}-08-28,7:00 PM,${ex[0]},Home,${SC.name} High School,Game,,Senior night`,
-    meet ? `${y}-03-21,9:00 AM,${SC.mascot} Invitational,Home,${SC.name} High School,Meet,,`
-         : `${y}-09-04,7:00 PM,${ex[1]},Away,${ex[1]} High School,Game,,`,
-    meet ? `${y}-04-02,TBA,District Meet,Neutral,"Ogallala, NE",Tournament,,Location to be confirmed`
-         : `${y}-09-11,TBA,${ex[2]},Neutral,"North Platte, NE",Game,,Time to be announced`];
+    meet ? `${dstr(s1)},10:00 AM,${ex[0]} Invitational,Away,${ex[0]} High School,Meet,,Bus leaves 7:30 AM`
+         : `${dstr(f1)},7:00 PM,${ex[0]},Home,${SC.name} High School,Game,,Senior night`,
+    meet ? `${dstr(s2)},9:00 AM,${SC.mascot} Invitational,Home,${SC.name} High School,Meet,,`
+         : `${dstr(f2)},7:00 PM,${ex[1]},Away,${ex[1]} High School,Game,,`,
+    meet ? `${dstr(s3)},TBA,District Meet,Neutral,"Ogallala, NE",Tournament,,Location to be confirmed`
+         : `${dstr(f3)},TBA,${ex[2]},Neutral,"North Platte, NE",Game,,Time to be announced`];
   return rows.join("\r\n")+"\r\n";
 }
 function downloadTemplate(){
@@ -626,6 +631,11 @@ function parseCSV(text){
   return rows.filter(r=>r.some(x=>x.trim()!==""));
 }
 function normDate(v){
+  const r = normDate0(v); if(!r) return null;
+  const [y,m,d] = r.split("-").map(Number); const t = new Date(y,m-1,d);
+  return (t.getFullYear()===y && t.getMonth()===m-1 && t.getDate()===d) ? r : null;
+}
+function normDate0(v){
   v = v.trim(); let m;
   if((m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v))) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
   if((m = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(v))){ const y = m[3].length===2 ? "20"+m[3] : m[3]; return `${y}-${m[1].padStart(2,"0")}-${m[2].padStart(2,"0")}`; }
