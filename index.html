@@ -189,6 +189,21 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .biz-head{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
 .biz-head .logo{width:58px;height:58px;font-size:20px;flex:none}
 .youbadge{display:inline-block;font-size:12px;font-weight:800;background:var(--royal);color:var(--royal-ink);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+/* Schedule */
+.nextup{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px 16px;margin:14px 0 4px}
+.dateblk{border-radius:14px;background:var(--royal);color:var(--royal-ink);text-align:center;padding:8px 0;line-height:1.05}
+.dateblk span{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.dateblk b{display:block;font-family:var(--display);font-weight:800;font-size:26px}
+.dateblk.past{background:var(--chip);color:var(--muted)}
+.nextup .when{font-size:13px;font-weight:800;color:var(--royal);text-transform:uppercase;letter-spacing:.05em}
+.nextup .opp{font-weight:800;font-size:18px;line-height:1.2;margin:2px 0}
+.ev{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font:inherit;color:inherit}
+.ev:first-child{border-top:0}
+.ev .dateblk b{font-size:20px}
+.res{font-weight:800;font-size:14px}
+.res.w{color:#15803D}.res.l{color:#B91C1C}
+.csvbox{background:var(--chip);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.5;margin:10px 0}
+.csvbox code{font-size:12px;word-break:break-word}
 /* Team branding */
 .tlogo{width:34px;height:34px;object-fit:contain;flex:none}
 .hero{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:22px;margin:16px 0 4px;background:var(--chip)}
@@ -420,8 +435,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -512,7 +527,7 @@ function viewSportPicker(){
     <div class="list">${SPORTS.map(sp=>{ const st = sportStats(sp);
       return `<a class="row" href="${sportPath(sp.id)}" style="text-decoration:none;color:inherit;grid-template-columns:46px 1fr auto">
         <span class="logo" style="background:var(--chip);font-size:24px" aria-hidden="true">${sp.icon}</span>
-        <div><div class="deal">${sp.name}</div><div class="small">$${st.raised.toLocaleString()} raised · ${st.pct}% of goal</div>
+        <div><div class="deal">${sp.name}</div><div class="small">$${st.raised.toLocaleString()} raised · ${st.pct}% of goal</div>${(n=>n?`<div class="small" style="color:var(--royal);font-weight:700">Next: ${evDate(n).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})} ${vsText(n)}</div>`:"")(nextEvent(sp))}
           <div class="goal" style="padding:0;border:0;margin:6px 0 0;background:none"><div class="bar" style="margin:0;height:6px"><i style="width:${st.pct}%"></i></div></div></div>
         <span class="small">›</span></a>`; }).join("")}</div>
     <h3>Deals from</h3>
@@ -520,11 +535,175 @@ function viewSportPicker(){
     ${partners()}
   </div>`;
 }
+/* ---------- Schedule ---------- */
+const OPPONENTS = {
+  tigers:["Perkins County","Hitchcock County","Wallace","Maywood-Hayes Center","Southwest","Arapahoe","Medicine Valley","Wauneta-Palisade","Sutherland","Hayes Center"],
+  bison:["North Platte","Gothenburg","Lexington","Holdrege","Ogallala","Cozad","Sidney","Broken Bow","Minden","Kearney Catholic"]
+};
+const EV_TYPES = ["Game","Meet","Tournament","Scrimmage","Practice","Other"];
+function dstr(d){ const p = n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function seedSchedule(sp){
+  const opps = OPPONENTS[SCHOOL] || OPPONENTS.tigers; const out = [];
+  const meet = sp.id==="track" || sp.id==="wrestling";
+  const start = new Date(); start.setHours(12,0,0,0); start.setDate(start.getDate() - 17 + (sp.id.length % 4));
+  for(let i=0;i<9;i++){
+    const d = new Date(start); d.setDate(start.getDate() + i*7);
+    const home = i%2===0, opp = opps[(i + sp.id.length) % opps.length];
+    const past = d < new Date(new Date().toDateString());
+    const ev = {id:"e"+i, date:dstr(d), time: meet ? "10:00" : "19:00", type: meet ? (i%3===2?"Tournament":"Meet") : "Game",
+      opponent: meet ? `${opp} Invitational` : opp, homeAway: meet ? (home?"Home":"Away") : (home?"Home":"Away"),
+      location: home ? `${SC.name} High School` : `${opp.replace(/ Invitational$/,"")}`, notes:"", result:""};
+    if(past) ev.result = meet ? ["1st of 8","3rd of 10","2nd of 6"][i%3] : (i%3===1 ? `L 14-21` : `W ${28+i*3}-${7+i*2}`);
+    out.push(ev);
+  }
+  return out;
+}
+function scheduleOf(sp){
+  state.schedule = state.schedule || {};
+  if(!state.schedule[sp.id]) state.schedule[sp.id] = seedSchedule(sp);
+  return state.schedule[sp.id].slice().sort((a,b)=>(a.date+(a.time||"99")).localeCompare(b.date+(b.time||"99")));
+}
+function evDate(e){ const [y,m,d] = e.date.split("-").map(Number); return new Date(y,m-1,d); }
+function fmtTime(t){ if(!t) return "Time TBA"; const m = /^(\d{1,2}):(\d{2})$/.exec(t); if(!m) return t; let h=+m[1]; const ap = h>=12?"PM":"AM"; h = h%12||12; return `${h}:${m[2]} ${ap}`; }
+function nextEvent(sp){ const today = new Date(new Date().toDateString()); return scheduleOf(sp).find(e=>evDate(e) >= today); }
+function untilText(e){ const today = new Date(new Date().toDateString()); const n = Math.round((evDate(e)-today)/86400e3);
+  return n===0 ? "Today" : n===1 ? "Tomorrow" : n<7 ? `This ${evDate(e).toLocaleDateString("en-US",{weekday:"long"})}` : `In ${n} days`; }
+function vsText(e){ return e.type==="Game"||e.type==="Scrimmage" ? `${e.homeAway==="Away"?"at":"vs."} ${esc(e.opponent)}` : esc(e.opponent); }
+function dateBlk(e, past){ const d = evDate(e); return `<div class="dateblk${past?" past":""}"><span>${d.toLocaleDateString("en-US",{month:"short"})}</span><b>${d.getDate()}</b><span>${d.toLocaleDateString("en-US",{weekday:"short"})}</span></div>`; }
+function nextUpCard(sp){
+  const e = nextEvent(sp);
+  if(!e) return `<div class="nextup" style="grid-template-columns:1fr"><div><div class="when">Schedule</div><div class="small">No upcoming events yet.</div>
+    ${scheduleOf(sp).length?`<button class="linkbtn" data-action="sched" style="padding:4px 0 0">See results</button>`:""}</div></div>`;
+  return `<div class="nextup">${dateBlk(e)}<div><div class="when">Next up · ${untilText(e)}</div><div class="opp">${vsText(e)}</div>
+    <div class="small">${fmtTime(e.time)} · ${e.homeAway}${e.location?` · ${esc(e.location)}`:""}</div>
+    <button class="linkbtn" data-action="sched" style="padding:4px 0 0">Full schedule</button></div></div>`;
+}
+function evRow(e, editable){
+  const past = evDate(e) < new Date(new Date().toDateString());
+  const r = e.result ? `<span class="res ${/^W/i.test(e.result)?"w":/^L/i.test(e.result)?"l":""}">${esc(e.result)}</span>` : (past?"":`<span class="small">${e.homeAway}</span>`);
+  const tag = editable ? "button" : "div";
+  return `<${tag} class="ev"${editable?` data-action="ev-edit" data-id="${e.id}"`:""}>${dateBlk(e,past)}<div><div class="deal">${vsText(e)}</div>
+    <div class="small">${fmtTime(e.time)}${e.location?` · ${esc(e.location)}`:""}${e.type!=="Game"?` · ${e.type}`:""}${e.notes?`<br>${esc(e.notes)}`:""}</div></div>${editable?`<span class="small">Edit</span>`:r}</${tag}>`;
+}
+function sheetSchedule(){
+  const all = scheduleOf(SPORT), today = new Date(new Date().toDateString());
+  const up = all.filter(e=>evDate(e)>=today), past = all.filter(e=>evDate(e)<today).reverse();
+  openSheet(`<h2 style="margin-top:0">${SC.mascot} ${SPORT.name} schedule</h2>
+    <h3 style="margin-top:4px">Upcoming</h3>
+    <div class="list">${up.map(e=>evRow(e)).join("") || `<div class="empty">No upcoming events.</div>`}</div>
+    ${past.length?`<h3>Results</h3><div class="list">${past.map(e=>evRow(e)).join("")}</div>`:""}
+    <button class="btn" data-action="close" style="margin-top:18px">Done</button>`);
+}
+
+/* ---------- Schedule editing (coach) ---------- */
+const CSV_COLS = ["date","time","opponent","home_away","location","event_type","result","notes"];
+function templateCSV(){
+  const sp = SPORT, ex = OPPONENTS[SCHOOL]||OPPONENTS.tigers, y = new Date().getFullYear()+1;
+  const meet = sp && (sp.id==="track"||sp.id==="wrestling");
+  const rows = [CSV_COLS.join(","),
+    meet ? `${y}-03-14,10:00 AM,${ex[0]} Invitational,Away,${ex[0]} High School,Meet,,Bus leaves 7:30 AM`
+         : `${y}-08-28,7:00 PM,${ex[0]},Home,${SC.name} High School,Game,,Senior night`,
+    meet ? `${y}-03-21,9:00 AM,${SC.mascot} Invitational,Home,${SC.name} High School,Meet,,`
+         : `${y}-09-04,7:00 PM,${ex[1]},Away,${ex[1]} High School,Game,,`,
+    meet ? `${y}-04-02,TBA,District Meet,Neutral,"Ogallala, NE",Tournament,,Location to be confirmed`
+         : `${y}-09-11,TBA,${ex[2]},Neutral,"North Platte, NE",Game,,Time to be announced`];
+  return rows.join("\r\n")+"\r\n";
+}
+function downloadTemplate(){
+  const url = URL.createObjectURL(new Blob([templateCSV()],{type:"text/csv"}));
+  const a = document.createElement("a"); a.href = url; a.download = `${SCHOOL}-${SPORT.id}-schedule-template.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+function parseCSV(text){
+  const rows = []; let row = [], f = "", q = false;
+  text = text.replace(/^\uFEFF/,"");
+  for(let i=0;i<text.length;i++){ const c = text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){ f+='"'; i++; } else q = false; } else f += c; }
+    else if(c==='"') q = true; else if(c===","){ row.push(f); f=""; }
+    else if(c==="\n"||c==="\r"){ if(c==="\r"&&text[i+1]==="\n") i++; row.push(f); rows.push(row); row=[]; f=""; }
+    else f += c; }
+  if(f!==""||row.length){ row.push(f); rows.push(row); }
+  return rows.filter(r=>r.some(x=>x.trim()!==""));
+}
+function normDate(v){
+  v = v.trim(); let m;
+  if((m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v))) return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+  if((m = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(v))){ const y = m[3].length===2 ? "20"+m[3] : m[3]; return `${y}-${m[1].padStart(2,"0")}-${m[2].padStart(2,"0")}`; }
+  return null;
+}
+function normTime(v){
+  v = (v||"").trim(); if(!v || /^tba|tbd$/i.test(v)) return ""; let m;
+  if((m = /^(\d{1,2}):(\d{2})\s*([ap])\.?m?\.?$/i.exec(v))){ let h = +m[1]%12; if(/p/i.test(m[3])) h += 12; return `${String(h).padStart(2,"0")}:${m[2]}`; }
+  if((m = /^(\d{1,2})\s*([ap])\.?m?\.?$/i.exec(v))){ let h = +m[1]%12; if(/p/i.test(m[2])) h += 12; return `${String(h).padStart(2,"0")}:00`; }
+  if((m = /^(\d{1,2}):(\d{2})$/.exec(v))) return `${m[1].padStart(2,"0")}:${m[2]}`;
+  return null;
+}
+function importCSV(text){
+  const rows = parseCSV(text); if(!rows.length) return {events:[], errors:["The file is empty."]};
+  const head = rows[0].map(h=>h.trim().toLowerCase().replace(/[\s\/-]+/g,"_"));
+  const ix = k=>head.indexOf(k);
+  if(ix("date")<0 || ix("opponent")<0) return {events:[], errors:["The first row needs column headings. At least “date” and “opponent” are required. Use the template."]};
+  const events = [], errors = [];
+  rows.slice(1).forEach((r,n)=>{ const g = k=>ix(k)>=0 ? (r[ix(k)]||"").trim() : "";
+    const line = n+2, date = normDate(g("date")), time = normTime(g("time")), opp = clean(g("opponent"));
+    if(!date) return errors.push(`Row ${line}: date “${g("date")||"blank"}” isn’t a date. Use 2027-08-28 or 8/28/2027.`);
+    if(!opp) return errors.push(`Row ${line}: opponent or event name is missing.`);
+    if(time===null) return errors.push(`Row ${line}: time “${g("time")}” isn’t a time. Use 7:00 PM, 19:00 or TBA.`);
+    const ha = (g("home_away")||"Home").toLowerCase(); const type = EV_TYPES.find(t=>t.toLowerCase()===g("event_type").toLowerCase()) || "Game";
+    events.push({id:"e"+Date.now()+"_"+n, date, time, opponent:opp, homeAway: ha.startsWith("a")?"Away":ha.startsWith("n")?"Neutral":"Home",
+      location:clean(g("location")), type, result:clean(g("result")), notes:clean(g("notes"))});
+  });
+  return {events, errors};
+}
+function sheetEvent(id){
+  const e = id ? state.schedule[SPORT.id].find(x=>x.id===id) : {date:dstr(new Date()), time:"19:00", opponent:"", homeAway:"Home", location:`${SC.name} High School`, type:"Game", result:"", notes:""};
+  const opt = (arr,v)=>arr.map(x=>`<option${x===v?" selected":""}>${x}</option>`).join("");
+  openSheet(`<h2 style="margin-top:0">${id?"Edit event":"Add an event"}</h2>
+    <div class="row2"><div><label class="f" for="ev-date">Date</label><input class="field" type="date" id="ev-date" value="${e.date}"></div>
+      <div><label class="f" for="ev-time">Time <span class="small">(blank = TBA)</span></label><input class="field" type="time" id="ev-time" value="${e.time}"></div></div>
+    <label class="f" for="ev-opp">Opponent or event name</label><input class="field" id="ev-opp" value="${esc(e.opponent)}" placeholder="e.g. Perkins County">
+    <div class="row2"><div><label class="f" for="ev-ha">Home / Away</label><select class="field" id="ev-ha">${opt(["Home","Away","Neutral"],e.homeAway)}</select></div>
+      <div><label class="f" for="ev-type">Type</label><select class="field" id="ev-type">${opt(EV_TYPES,e.type)}</select></div></div>
+    <label class="f" for="ev-loc">Location</label><input class="field" id="ev-loc" value="${esc(e.location)}">
+    <label class="f" for="ev-res">Result <span class="small">(after the game, e.g. W 28-14)</span></label><input class="field" id="ev-res" value="${esc(e.result)}">
+    <label class="f" for="ev-notes">Notes</label><input class="field" id="ev-notes" value="${esc(e.notes)}" placeholder="e.g. Senior night">
+    <p class="notice" id="ev-err" style="display:none"></p>
+    <button class="btn" data-action="ev-save" data-id="${id||""}">${id?"Save changes":"Add to schedule"}</button>
+    ${id?`<button class="btn ghost" data-action="ev-del" data-id="${id}" style="margin-top:10px">Delete event</button>`:""}
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function scheduleCoachSection(){
+  const all = scheduleOf(SPORT);
+  return `<h3 style="display:flex;justify-content:space-between;align-items:center">Schedule (${all.length})<button class="copy" data-action="ev-add" style="margin:0">+ Add event</button></h3>
+    <div class="goal" style="margin-top:0">
+      <strong>Upload your whole schedule</strong>
+      <p class="small" style="margin:6px 0 10px">Fill in the template in Excel, Google Sheets or Numbers, save it as a CSV and upload it here.</p>
+      <div class="row2">
+        <button class="btn ghost" data-action="csv-template" style="padding:12px 8px;font-size:15px">Get template</button>
+        <label class="btn" style="padding:12px 8px;font-size:15px;cursor:pointer">Upload CSV<input type="file" accept=".csv,text/csv" id="csv-up" style="position:absolute;width:1px;height:1px;opacity:0"></label>
+      </div>
+      <div class="csvbox"><strong>Template columns</strong><br><code>${CSV_COLS.join(", ")}</code><br>
+        <b>date</b> 2027-08-28 or 8/28/2027 · <b>time</b> 7:00 PM, 19:00 or TBA · <b>home_away</b> Home, Away or Neutral · <b>event_type</b> ${EV_TYPES.join(", ")} · <b>result</b> optional, like W 28-14 · <b>notes</b> optional</div>
+    </div>
+    <div class="list">${all.map(e=>evRow(e,true)).join("") || `<div class="empty">No events yet. Add one or upload a CSV.</div>`}</div>`;
+}
+function sheetImport(res){
+  ui.pendingImport = res.events;
+  openSheet(`<h2 style="margin-top:0">Upload schedule</h2>
+    <p><strong>${res.events.length} event${res.events.length===1?"":"s"}</strong> ready to add.</p>
+    ${res.errors.length?`<div class="csvbox" style="background:color-mix(in srgb,#B91C1C 10%,var(--surface))"><strong>${res.errors.length} row${res.errors.length===1?"":"s"} skipped</strong><br>${res.errors.slice(0,8).map(esc).join("<br>")}${res.errors.length>8?`<br>…and ${res.errors.length-8} more`:""}</div>`:""}
+    ${res.events.length?`<div class="list">${res.events.slice(0,5).map(e=>evRow(e)).join("")}</div>${res.events.length>5?`<p class="small">…and ${res.events.length-5} more</p>`:""}
+    <div class="row2" style="margin-top:14px"><button class="btn ghost" data-action="csv-apply" data-mode="add">Add to schedule</button><button class="btn" data-action="csv-apply" data-mode="replace">Replace schedule</button></div>`
+      : `<button class="btn ghost" data-action="csv-template" style="margin-top:10px">Get the template</button>`}
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+
 function viewBuy(){
   if(!SPORT) return viewSportPicker();
   return `<div class="wrap">${header()}
     ${BR().photo ? `<img class="hero" src="${BR().photo}" alt="${ORG} team photo">`
       : `<div class="hero-slot"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Team photo goes here<span class="small" style="font-weight:500">Coaches add it from the Coach tab</span></div>`}
+    ${nextUpCard(SPORT)}
     <h1>Back the teams. Save all year.</h1>
     <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports ${SCHOOL_FULL}.</p>
     ${passCard(true)}
@@ -553,6 +732,7 @@ function viewPass(){
   const saved = state.redemptions.reduce((s,r)=>s+(OFFERS.find(o=>o.id===r.offerId)?.value||0),0);
   const hist = [...state.redemptions].reverse();
   return `<div class="wrap">${header()}
+    ${SPORT ? nextUpCard(SPORT) : ""}
     ${passCard(false)}
     <div class="stats">
       <div class="stat"><b>$${saved}</b><span class="small">Saved so far</span></div>
@@ -706,6 +886,7 @@ function viewCoach(){
     <div class="goal"><strong>${pct}% of goal</strong><span class="small"> · ${total} of ${GOAL} passes ($${(GOAL*PRICE).toLocaleString()})</span>
       <div class="bar"><i style="width:${pct}%"></i></div>
       <span class="small">${GOAL-total>0 ? `${GOAL-total} more passes to hit the goal.` : "Goal reached!"}</span></div>
+    ${scheduleCoachSection()}
     <h3 style="display:flex;justify-content:space-between;align-items:center">Roster (${rosterOf(SPORT).length})<button class="copy" data-action="ro-add" style="margin:0">+ Add player</button></h3>
     <div class="list">${rosterOf(SPORT).slice().sort((a,b)=>(+a.num)-(+b.num)).map(p=>`<button class="row" data-action="ro-edit" data-id="${p.id}" style="grid-template-columns:46px 1fr auto">
       <span class="logo" style="background:var(--chip);color:var(--royal);font-family:var(--display);font-weight:800" aria-hidden="true">${esc(p.num)}</span>
@@ -1140,6 +1321,8 @@ function render(){
   const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : ui.view==="admin" ? viewAdmin() : (state.purchased ? viewPass() : viewBuy());
   app.innerHTML = roleBar() + body;
   document.querySelector(".tabs").hidden = ["coach","biz","admin"].includes(ui.view);
+  const cu = document.getElementById("csv-up");
+  if(cu) cu.addEventListener("change", e=>{ const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=>sheetImport(importCSV(String(fr.result))); fr.readAsText(f); e.target.value=""; });
   document.querySelectorAll("input.up").forEach(el=>el.addEventListener("change", e=>uploadBrand(el.dataset.k, e.target.files[0], el.dataset.scope)));
   const hs = document.getElementById("hsearch");
   if(hs) hs.addEventListener("input", e=>{ ui.hq=e.target.value; document.getElementById("hlist").innerHTML = holderRows(); });
@@ -1262,6 +1445,25 @@ document.addEventListener("click", e=>{
     return;
   }
   if(a==="brand-rm"){ delete brandTarget(t.dataset.scope)[t.dataset.k]; save(); render(); return; }
+  if(a==="sched"){ sheetSchedule(); return; }
+  if(a==="ev-add"){ sheetEvent(null); return; }
+  if(a==="ev-edit"){ sheetEvent(t.dataset.id); return; }
+  if(a==="ev-save"){
+    const g = id=>document.getElementById(id).value; const err = m=>{ const e = document.getElementById("ev-err"); e.textContent = m; e.style.display = "block"; };
+    const ev = {date:g("ev-date"), time:g("ev-time"), opponent:clean(g("ev-opp")), homeAway:g("ev-ha"), type:g("ev-type"), location:clean(g("ev-loc")), result:clean(g("ev-res")), notes:clean(g("ev-notes"))};
+    if(!normDate(ev.date)) return err("Pick a date.");
+    if(!ev.opponent) return err("Enter the opponent or event name.");
+    scheduleOf(SPORT); const list = state.schedule[SPORT.id];
+    if(t.dataset.id) Object.assign(list.find(x=>x.id===t.dataset.id), ev); else list.push(Object.assign({id:"e"+Date.now()}, ev));
+    save(); render(); closeSheet(); return;
+  }
+  if(a==="ev-del"){ state.schedule[SPORT.id] = state.schedule[SPORT.id].filter(x=>x.id!==t.dataset.id); save(); render(); closeSheet(); return; }
+  if(a==="csv-template"){ downloadTemplate(); return; }
+  if(a==="csv-apply"){
+    scheduleOf(SPORT); const evs = ui.pendingImport||[];
+    state.schedule[SPORT.id] = t.dataset.mode==="replace" ? evs : state.schedule[SPORT.id].concat(evs);
+    ui.pendingImport = null; save(); render(); toast(`${evs.length} event${evs.length===1?"":"s"} ${t.dataset.mode==="replace"?"now make up your schedule":"added to your schedule"}.`); return;
+  }
   if(a==="ro-add"){ sheetPlayer(null); return; }
   if(a==="ro-edit"){ sheetPlayer(t.dataset.id); return; }
   if(a==="ro-save"){
