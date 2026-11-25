@@ -81,11 +81,11 @@ label.f{display:block;font-weight:700;font-size:15px;margin:0 0 6px}
 .btn{display:block;width:100%;background:var(--royal);color:var(--royal-ink);border:0;border-radius:999px;padding:16px;font-weight:700;font-size:17px;box-shadow:0 10px 24px -12px color-mix(in srgb,var(--c-main) 70%,transparent);cursor:pointer;text-align:center;text-decoration:none}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
-.linkbtn{background:none;border:0;color:var(--royal);font-weight:700;padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.linkbtn{background:none;border:0;color:var(--link,var(--royal));font-weight:700;padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
 ol.steps{list-style:none;counter-reset:s;padding:0;margin:0}
 ol.steps li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;gap:12px;padding:10px 0;align-items:start}
-ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;background:var(--chip);color:var(--royal)}
+ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;background:var(--chip);color:var(--link,var(--royal))}
 .bizwrap{display:flex;flex-wrap:wrap;gap:8px}
 .bizwrap span{background:var(--chip);padding:6px 12px;border-radius:999px;font-size:14px}
 
@@ -110,7 +110,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 /* Pass page */
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 18px}
-.stat b{display:block;font-family:var(--display);font-weight:800;font-size:36px;line-height:1.05;letter-spacing:-.04em;color:var(--royal)}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:36px;line-height:1.05;letter-spacing:-.04em;color:var(--link,var(--royal))}
 .hist .row{cursor:default;grid-template-columns:46px 1fr}
 .hist .row:hover{background:none}
 
@@ -119,7 +119,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
   padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabs .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr}
 .tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0 12px;color:var(--muted);text-decoration:none;font-weight:700;font-size:13px}
-.tabs a[aria-current="page"]{color:var(--royal)}
+.tabs a[aria-current="page"]{color:var(--link,var(--royal))}
 
 /* Sheet */
 .scrim{position:fixed;inset:0;z-index:30;background:rgba(8,10,20,.55);display:flex;align-items:flex-end;justify-content:center}
@@ -157,7 +157,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .welcome{background:var(--bg);width:100%;max-width:420px;border-radius:28px;padding:30px 24px 22px;text-align:center;animation:up .25s ease-out}
 .w-icon{width:84px;height:84px;border-radius:26px;margin:0 auto 18px;display:grid;place-items:center;color:#fff;
   background:radial-gradient(circle at 80% 15%,color-mix(in srgb,var(--c-acc2) 60%,transparent),transparent 50%),linear-gradient(135deg,var(--c-dark),var(--c-main) 60%,var(--c-light));box-shadow:0 16px 30px -16px color-mix(in srgb,var(--c-main) 70%,transparent)}
-.w-step{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:0 0 6px}
+.w-step{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--link,var(--royal));font-weight:800;margin:0 0 6px}
 .welcome h2{margin:0 0 10px}
 .welcome .w-body{color:var(--muted);min-height:100px;margin:0 0 8px}
 .dots{display:flex;justify-content:center;gap:8px;margin:0 0 20px}
@@ -174,7 +174,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .seg a[aria-current="page"]{background:var(--royal);color:var(--royal-ink)}
 
 /* Coach + business dashboards */
-.kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:22px 0 4px}
+.kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--link,var(--royal));font-weight:800;margin:22px 0 4px}
 .goal{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin:12px 0}
 .goal .bar{height:12px;border-radius:99px;background:var(--chip);overflow:hidden;margin:10px 0 6px}
 .goal .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--c-main),var(--c-acc));border-radius:99px}
@@ -185,7 +185,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .board .mini i{display:block;height:100%;background:var(--royal);border-radius:99px}
 .board .cnt{text-align:right}
 .board .cnt b{display:block;font-size:20px;font-family:var(--display);font-weight:800}
-.copy{font-size:13px;font-weight:700;color:var(--royal);background:var(--chip);border:0;border-radius:999px;padding:6px 12px;cursor:pointer;margin-top:8px}
+.copy{font-size:13px;font-weight:700;color:var(--link,var(--royal));background:var(--chip);border:0;border-radius:999px;padding:6px 12px;cursor:pointer;margin-top:8px}
 .biz-head{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
 .biz-head .logo{width:58px;height:58px;font-size:20px;flex:none}
 .youbadge{display:inline-block;font-size:12px;font-weight:800;background:var(--royal);color:var(--royal-ink);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
@@ -195,7 +195,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .dateblk span{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .dateblk b{display:block;font-family:var(--display);font-weight:800;font-size:26px}
 .dateblk.past{background:var(--chip);color:var(--muted)}
-.nextup .when{font-size:13px;font-weight:800;color:var(--royal);text-transform:uppercase;letter-spacing:.05em}
+.nextup .when{font-size:13px;font-weight:800;color:var(--link,var(--royal));text-transform:uppercase;letter-spacing:.05em}
 .nextup .opp{font-weight:800;font-size:18px;line-height:1.2;margin:2px 0}
 .ev{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font:inherit;color:inherit}
 .ev:first-child{border-top:0}
@@ -438,6 +438,7 @@ function setThemeVars(th){
   st.setProperty("--c-acc",th.accent); st.setProperty("--c-acc2",acc2);
   st.setProperty("--c-star", same && c.star ? c.star : acc2);
   st.setProperty("--c-ink1", inkOn(th.primary));
+  if(lum(th.primary) > .4) st.setProperty("--link", lum(th.secondary) < .4 ? th.secondary : "#111111"); else st.removeProperty("--link");
   st.setProperty("--c-ink2", same && c.ink2 ? c.ink2 : inkOn(acc2));
 }
 if(SCHOOL){ const c = SCHOOLS[SCHOOL].colors, st = document.documentElement.style;
@@ -558,7 +559,7 @@ function viewSportPicker(){
     <div class="list">${SPORTS.map(sp=>{ const st = sportStats(sp);
       return `<a class="row" href="${sportPath(sp.id)}" style="text-decoration:none;color:inherit;grid-template-columns:46px 1fr auto">
         <span class="logo" style="background:var(--chip);font-size:24px" aria-hidden="true">${sp.icon}</span>
-        <div><div class="deal">${sp.name}</div><div class="small">$${st.raised.toLocaleString()} raised · ${st.pct}% of goal</div>${(n=>n?`<div class="small" style="color:var(--royal);font-weight:700">Next: ${evDate(n).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})} ${vsText(n)}</div>`:"")(nextEvent(sp))}
+        <div><div class="deal">${sp.name}</div><div class="small">$${st.raised.toLocaleString()} raised · ${st.pct}% of goal</div>${(n=>n?`<div class="small" style="color:var(--link,var(--royal));font-weight:700">Next: ${evDate(n).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})} ${vsText(n)}</div>`:"")(nextEvent(sp))}
           <div class="goal" style="padding:0;border:0;margin:6px 0 0;background:none"><div class="bar" style="margin:0;height:6px"><i style="width:${st.pct}%"></i></div></div></div>
         <span class="small">›</span></a>`; }).join("")}</div>
     <h3>Deals from</h3>
@@ -817,7 +818,7 @@ function sheetRosterPreview(res){
   openSheet(`<h2 style="margin-top:0">Roster preview</h2>
     <p><strong>${res.players.length} player${res.players.length===1?"":"s"}</strong> found.</p>
     ${res.skipped.length?`<div class="csvbox" style="background:color-mix(in srgb,#B91C1C 10%,var(--surface))"><strong>${res.skipped.length} line${res.skipped.length===1?"":"s"} skipped</strong><br>${res.skipped.slice(0,6).map(esc).join("<br>")}${res.skipped.length>6?`<br>…and ${res.skipped.length-6} more`:""}</div>`:""}
-    ${res.players.length?`<div class="list">${res.players.slice(0,8).map(p=>`<div class="row" style="cursor:default;grid-template-columns:46px 1fr"><span class="logo" style="background:var(--chip);color:var(--royal);font-family:var(--display);font-weight:800">${esc(p.num)}</span><div class="deal">${esc(p.name)}</div></div>`).join("")}</div>
+    ${res.players.length?`<div class="list">${res.players.slice(0,8).map(p=>`<div class="row" style="cursor:default;grid-template-columns:46px 1fr"><span class="logo" style="background:var(--chip);color:var(--link,var(--royal));font-family:var(--display);font-weight:800">${esc(p.num)}</span><div class="deal">${esc(p.name)}</div></div>`).join("")}</div>
       ${res.players.length>8?`<p class="small">…and ${res.players.length-8} more</p>`:""}
       <p class="small" style="margin-top:10px">Players who match a jersey number already on your roster keep the passes credited to them.</p>
       <div class="row2" style="margin-top:10px"><button class="btn ghost" data-action="rp-apply" data-mode="add">Add to roster</button><button class="btn" data-action="rp-apply" data-mode="replace">Replace roster</button></div>`
@@ -1061,7 +1062,7 @@ function viewCoach(){
     ${scheduleCoachSection()}
     <h3 style="display:flex;justify-content:space-between;align-items:center">Roster (${rosterOf(SPORT).length})<span style="display:flex;gap:6px"><button class="copy" data-action="rp-open" style="margin:0">Paste roster</button><button class="copy" data-action="ro-add" style="margin:0">+ Add player</button></span></h3>
     <div class="list">${rosterOf(SPORT).slice().sort((a,b)=>(+a.num)-(+b.num)).map(p=>`<button class="row" data-action="ro-edit" data-id="${p.id}" style="grid-template-columns:46px 1fr auto">
-      <span class="logo" style="background:var(--chip);color:var(--royal);font-family:var(--display);font-weight:800" aria-hidden="true">${esc(p.num)}</span>
+      <span class="logo" style="background:var(--chip);color:var(--link,var(--royal));font-family:var(--display);font-weight:800" aria-hidden="true">${esc(p.num)}</span>
       <div><div class="deal">${esc(p.name)}</div><div class="small">#${esc(p.num)}${p.contact?` · ${esc(p.contact)}`:""}</div></div><span class="small">Edit</span></button>`).join("") || `<div class="empty">No players yet. Add your roster so each player gets a share link.</div>`}</div>
     <h3>Player leaderboard</h3>
     <div class="list board">${rows.map(([t,n],i)=>`<div class="row"><span class="rank">${i+1}</span>
