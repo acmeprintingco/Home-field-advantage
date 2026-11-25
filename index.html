@@ -1538,7 +1538,8 @@ function renderLanding(){
   document.querySelector(".tabs").hidden = true;
   const card = id => { const sc = SCHOOLS[id], c = sc.colors;
     let lg = null; try{ lg = ((JSON.parse(localStorage.getItem("hfa-demo-v4-"+id))||{}).brand||{}).school?.logo; }catch(e){}
-    return `<a class="row" href="${sc.path}" style="text-decoration:none;color:inherit;grid-template-columns:52px 1fr auto">
+    const href = /(^|\.)homefieldadvantage\.deals$/.test(location.hostname) ? `https://${id}.homefieldadvantage.deals/` : sc.path;
+    return `<a class="row" href="${href}" style="text-decoration:none;color:inherit;grid-template-columns:52px 1fr auto">
       ${lg?`<img src="${lg}" alt="" style="width:52px;height:52px;object-fit:contain">`:`<span class="logo" style="width:52px;height:52px;background:linear-gradient(135deg,${c.dark},${c.main} 60%,${c.light});border:2px solid ${c.acc}" aria-hidden="true">${sc.mascot[0]}</span>`}
       <div><div class="deal">${sc.name} ${sc.mascot}</div><div class="small">${sc.town}, NE</div></div><span class="small">›</span></a>`; };
   document.getElementById("app").innerHTML = `<div class="wrap">
