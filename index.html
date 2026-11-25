@@ -253,13 +253,18 @@ function detectSchool(){
   const seg = (location.pathname.split("/").filter(Boolean)[0]||"").toLowerCase();
   return SCHOOL_IDS.includes(seg) ? seg : null;
 }
-// Links shared before schools existed (homefieldadvantage.deals/?player=22) belong to the Tigers
-if(!detectSchool() && new URLSearchParams(location.search).get("player")) location.replace("/tigers"+location.search+location.hash);
+const SUBDOMAIN_MODE = location.hostname.split(".").length>=3 && SCHOOL_IDS.includes(location.hostname.split(".")[0].toLowerCase());
+function detectSport(){
+  const segs = location.pathname.split("/").filter(Boolean).map(x=>x.toLowerCase());
+  return (SUBDOMAIN_MODE ? segs[0] : segs[1]) || null;
+}
+// Links shared before schools and sports existed belong to Tigers football
+if(!detectSchool() && new URLSearchParams(location.search).get("player")) location.replace("/tigers/football"+location.search+location.hash);
 const SCHOOL = detectSchool();
 let SCHOOL_FULL = "Dundy County-Stratton Tigers Football";
 let ORG = "DCS Tigers Football";
 const PRICE = 25;
-let TEAMS = ["Tigers Football team fund","Sample Player #7","Sample Player #12","Sample Player #22","Sample Player #54"];
+let TEAMS = [];
 let BASE_OFFERS = [
   {id:"marios",biz:"Mario’s Brick Oven",deal:"$5 off any large pizza",cat:"Food",limit:"monthly",value:5,color:"#C2410C",fine:"Dine-in or pickup. Can’t be combined with other offers.",addr:"214 Main St"},
   {id:"sunrise",biz:"Sunrise Coffee Co.",deal:"Free pastry with any drink",cat:"Food",limit:"monthly",value:4,color:"#7C4A2D",fine:"One pastry per visit. Any size drink.",addr:"9 Depot Square"},
@@ -288,13 +293,13 @@ let SEED_ADDED = [
 ];
 const H = (d,h)=>Date.now()-d*86400e3-h*3600e3;
 let SEED_HOLDERS = [
-  {passNo:"214",name:"Megan Schultz",email:"megan.schultz@example.com",team:"Sample Player #22",member:{name:"Kyle Schultz",status:"active"},log:[],
+  {passNo:"214",name:"Megan Schultz",email:"megan.schultz@example.com",team:"Football · Sample Player #22",member:{name:"Kyle Schultz",status:"active"},log:[],
    redemptions:[{offerId:"marios",ts:H(0,2.2),by:"Kyle Schultz"},{offerId:"sunrise",ts:H(4,1),by:"Megan Schultz"}]},
-  {passNo:"187",name:"Tyler Harsh",email:"tharsh@example.com",team:"Sample Player #7",member:null,log:[],
+  {passNo:"187",name:"Tyler Harsh",email:"tharsh@example.com",team:"Football · Sample Player #7",member:null,log:[],
    redemptions:[{offerId:"shack",ts:H(0,20),by:"Tyler Harsh"},{offerId:"marios",ts:H(1,2),by:"Tyler Harsh"}]},
-  {passNo:"342",name:"Ashley Kroeger",email:"ashleyk@example.com",team:"Tigers Football team fund",member:null,log:[],
+  {passNo:"342",name:"Ashley Kroeger",email:"ashleyk@example.com",team:"Volleyball · Team fund",member:null,log:[],
    redemptions:[{offerId:"elsol",ts:H(1,7),by:"Ashley Kroeger"}]},
-  {passNo:"129",name:"Dan Novak",email:"dnovak@example.com",team:"Sample Player #12",member:{name:"Lori Novak",status:"active"},log:[],
+  {passNo:"129",name:"Dan Novak",email:"dnovak@example.com",team:"Girls Basketball · Sample Player #13",member:{name:"Lori Novak",status:"active"},log:[],
    redemptions:[{offerId:"cuts",ts:H(3,2),by:"Dan Novak"},{offerId:"bowl",ts:H(9,5),by:"Lori Novak"}]}
 ];
 const LEVELS = ["Community MVP","Conference Partner","Presenting Partner"];
@@ -310,24 +315,35 @@ function rebuildOffers(){
 }
 function clean(v){ return String(v||"").replace(/[<>]/g,"").trim(); }
 const CATS = ["All","Food","Fun","Shopping","Services"];
-let KEY = "hfa-demo-v3-tigers";
+let KEY = "hfa-demo-v4-tigers";
 
 /* Demo numbers for the coach and business views */
-let GOAL = 150;
-let SALES = {"Tigers Football team fund":14,"Sample Player #7":23,"Sample Player #12":17,"Sample Player #22":31,"Sample Player #54":9};
+let SALES = {};
 let BIZSTATS = {marios:[19,71],sunrise:[24,88],elsol:[31,102],scoops:[12,40],bowl:[8,27],cinema:[15,49],shack:[6,21],hardware:[9,30],bloom:[4,13],wash:[7,26],cuts:[11,38]};
 
 /* ---------- School settings ---------- */
 const SCHOOLS = {
-  tigers:{name:"Dundy County-Stratton", mascot:"Tigers", town:"Benkelman", path:"/tigers",
+  tigers:{name:"Dundy County-Stratton", mascot:"Tigers", short:"DCS Tigers", town:"Benkelman", path:"/tigers",
+    sports:[
+      {id:"football",name:"Football",icon:"🏈",goal:150,fund:14,players:[[7,23],[12,17],[22,31],[54,9]]},
+      {id:"volleyball",name:"Volleyball",icon:"🏐",goal:80,fund:6,players:[[2,12],[9,18],[11,9],[15,14]]},
+      {id:"boys-basketball",name:"Boys Basketball",icon:"🏀",goal:80,fund:5,players:[[3,11],[10,15],[24,8]]},
+      {id:"girls-basketball",name:"Girls Basketball",icon:"🏀",goal:80,fund:7,players:[[4,9],[13,16],[21,12]]},
+      {id:"track",name:"Track & Field",icon:"🏃",goal:60,fund:4,players:[[5,10],[8,7]]}
+    ],
     colors:{dark:"#391213",main:"#7A1E2C",light:"#A8323F",acc:"#C9A227",acc2:"#E0B53E"}},
-  bison:{name:"McCook", mascot:"Bison", town:"McCook", path:"/bison",
+  bison:{name:"McCook", mascot:"Bison", short:"McCook Bison", town:"McCook", path:"/bison",
+    sports:[
+      {id:"football",name:"Football",icon:"🏈",goal:200,fund:15,players:[[3,28],[21,19],[44,22]]},
+      {id:"volleyball",name:"Volleyball",icon:"🏐",goal:100,fund:9,players:[[8,34],[12,11],[17,15]]},
+      {id:"boys-basketball",name:"Boys Basketball",icon:"🏀",goal:100,fund:6,players:[[5,16],[23,13]]},
+      {id:"girls-basketball",name:"Girls Basketball",icon:"🏀",goal:100,fund:7,players:[[2,18],[14,10]]},
+      {id:"wrestling",name:"Wrestling",icon:"🤼",goal:60,fund:3,players:[[14,12],[31,9]]},
+      {id:"track",name:"Track & Field",icon:"🏃",goal:80,fund:5,players:[[6,11],[19,8]]}
+    ],
     colors:{dark:"#3F0A0A",main:"#B91C1C",light:"#DC2626",acc:"#E5E7EB",acc2:"#F87171"}}
 };
 if(SCHOOL==="bison"){
-  ORG = "McCook Bison Athletics";
-  SCHOOL_FULL = "McCook Bison Athletics";
-  TEAMS = ["Bison Athletics fund","Football · Sample Player #3","Football · Sample Player #21","Volleyball · Sample Player #8","Wrestling · Sample Player #14","Basketball · Sample Player #5"];
   BASE_OFFERS = [
     {id:"diner",biz:"Norris Ave Diner",deal:"Free coffee with any breakfast",cat:"Food",limit:"monthly",value:3,color:"#9A3412",fine:"Dine-in only. Breakfast served until 11 am.",addr:"210 Norris Ave"},
     {id:"pizza",biz:"Red Willow Pizza Co.",deal:"$5 off any large pizza",cat:"Food",limit:"monthly",value:5,color:"#B91C1C",fine:"Dine-in or pickup.",addr:"118 W B St"},
@@ -353,25 +369,41 @@ if(SCHOOL==="bison"){
      redemptions:[{offerId:"pizza",ts:H(0,3),by:"Cody Wilkinson"},{offerId:"bean",ts:H(2,1),by:"Brooke Wilkinson"}]},
     {passNo:"244",name:"Ryan Pankonin",email:"rpankonin@example.com",team:"Football · Sample Player #21",member:null,log:[],
      redemptions:[{offerId:"outfit",ts:H(0,22),by:"Ryan Pankonin"}]},
-    {passNo:"157",name:"Kari Schlake",email:"karis@example.com",team:"Bison Athletics fund",member:null,log:[],
+    {passNo:"157",name:"Kari Schlake",email:"karis@example.com",team:"Track & Field · Team fund",member:null,log:[],
      redemptions:[{offerId:"diner",ts:H(1,4),by:"Kari Schlake"},{offerId:"wash",ts:H(6,2),by:"Kari Schlake"}]}
   ];
-  GOAL = 250;
-  SALES = {"Bison Athletics fund":22,"Football · Sample Player #3":28,"Football · Sample Player #21":19,"Volleyball · Sample Player #8":34,"Wrestling · Sample Player #14":12,"Basketball · Sample Player #5":16};
   BIZSTATS = {diner:[27,96],pizza:[22,81],bean:[41,150],lanes:[11,37],cinema:[18,62],outfit:[7,24],hardware:[10,33],wash:[9,30],barber:[14,47]};
-  KEY = "hfa-demo-v3-bison";
+  KEY = "hfa-demo-v4-bison";
 }
+/* ---------- Sports within the school ---------- */
+const SC = SCHOOL ? SCHOOLS[SCHOOL] : SCHOOLS.tigers;
+const SPORTS = SC.sports;
+const fundLabel = sp => `${sp.name} · Team fund`;
+const playerLabel = (sp,n) => `${sp.name} · Sample Player #${n}`;
+SPORTS.forEach(sp=>{ TEAMS.push(fundLabel(sp)); SALES[fundLabel(sp)] = sp.fund;
+  sp.players.forEach(([n,c])=>{ TEAMS.push(playerLabel(sp,n)); SALES[playerLabel(sp,n)] = c; }); });
+let SPORT = SCHOOL ? SPORTS.find(x=>x.id===detectSport()) || null : null;
+// A player link without a sport (from before sports existed) goes to the first sport
+if(SCHOOL && !SPORT && new URLSearchParams(location.search).get("player")) location.replace(sportPath(SPORTS[0].id)+location.search+location.hash);
+function sportPath(id){ return (SUBDOMAIN_MODE ? "/" : `/${SCHOOL}/`) + (id||""); }
+function sportOf(t){ return SPORTS.find(x=>t.startsWith(x.name+" · ")); }
+function shortLabel(t){ return SPORT ? t.split(" · ").slice(1).join(" · ") : t; }
+const sportTeams = sp => TEAMS.filter(t=>t.startsWith(sp.name+" · "));
+ORG = SPORT ? `${SC.short} ${SPORT.name}` : SC.short;
+SCHOOL_FULL = SPORT ? `${SC.name} ${SC.mascot} ${SPORT.name}` : `${SC.name} ${SC.mascot} Athletics`;
+let GOAL = SPORT ? SPORT.goal : SPORTS.reduce((a,x)=>a+x.goal,0);
+
 if(SCHOOL){ const c = SCHOOLS[SCHOOL].colors, st = document.documentElement.style;
   st.setProperty("--c-dark",c.dark); st.setProperty("--c-main",c.main); st.setProperty("--c-light",c.light); st.setProperty("--c-acc",c.acc); st.setProperty("--c-acc2",c.acc2);
-  document.title = `Home Field Advantage – ${SCHOOLS[SCHOOL].name} ${SCHOOLS[SCHOOL].mascot}`;
+  document.title = `Home Field Advantage – ${SCHOOLS[SCHOOL].name} ${SCHOOLS[SCHOOL].mascot}${SPORT?" "+SPORT.name:""}`;
 }
 
 let state = load();
-let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0], biz:BASE_OFFERS[0].id, fromLink:false};
+let ui = {view:"pass", cat:"All", q:"", team:SPORT ? sportTeams(SPORT)[0] : TEAMS[0], biz:BASE_OFFERS[0].id, fromLink:false};
 (function(){
   const p = new URLSearchParams(location.search).get("player");
   if(!p) return;
-  const t = TEAMS.find(x=>x.endsWith("#"+p));
+  const t = (SPORT ? sportTeams(SPORT) : TEAMS).find(x=>x.endsWith("#"+p));
   if(t){ ui.team = t; ui.fromLink = true; }
 })();
 let clockTimer = null;
@@ -419,7 +451,9 @@ function passCard(sample){
 }
 
 const SHIELD = `<svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" style="fill:var(--c-main);stroke:var(--c-acc)" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" style="fill:var(--c-acc2)"/></svg>`;
-function header(){ const L = SCHOOL && state.brand && state.brand.logo; return `<div class="top">${L?`<img class="tlogo" src="${L}" alt="">`:SHIELD}${ORG}</div>`; }
+function BR(){ const b = state.brand||{}, sc = b.school||{}, sp = (SPORT && b[SPORT.id])||{}; return {logo:sp.logo||sc.logo, photo:sp.photo||sc.photo}; }
+function brandTarget(){ const id = SPORT ? SPORT.id : "school"; state.brand[id] = state.brand[id]||{}; return state.brand[id]; }
+function header(){ const L = SCHOOL && BR().logo; return `<div class="top">${L?`<img class="tlogo" src="${L}" alt="">`:SHIELD}${ORG}</div>`; }
 
 function partners(){
   return `<section class="partners" aria-label="Platform Partners">
@@ -459,17 +493,36 @@ function renderWelcome(){
 }
 
 /* ---------- Views ---------- */
-function viewBuy(){
+function sportStats(sp){ const s = teamSales(); const n = sportTeams(sp).reduce((a,t)=>a+(s[t]||0),0); return {n, raised:n*PRICE, pct:Math.min(100,Math.round(n/sp.goal*100))}; }
+function viewSportPicker(){
   return `<div class="wrap">${header()}
-    ${state.brand.photo ? `<img class="hero" src="${state.brand.photo}" alt="${ORG} team photo">`
+    ${BR().photo ? `<img class="hero" src="${BR().photo}" alt="${SC.name} ${SC.mascot}">` : ""}
+    <h1>Pick your team.</h1>
+    <p class="lede">Every Advantage Pass backs one ${SC.mascot} team and unlocks the same ${OFFERS.length} local deals through Aug 31, 2027.</p>
+    <div class="list">${SPORTS.map(sp=>{ const st = sportStats(sp);
+      return `<a class="row" href="${sportPath(sp.id)}" style="text-decoration:none;color:inherit;grid-template-columns:46px 1fr auto">
+        <span class="logo" style="background:var(--chip);font-size:24px" aria-hidden="true">${sp.icon}</span>
+        <div><div class="deal">${sp.name}</div><div class="small">$${st.raised.toLocaleString()} raised · ${st.pct}% of goal</div>
+          <div class="goal" style="padding:0;border:0;margin:6px 0 0;background:none"><div class="bar" style="margin:0;height:6px"><i style="width:${st.pct}%"></i></div></div></div>
+        <span class="small">›</span></a>`; }).join("")}</div>
+    <h3>Deals from</h3>
+    <div class="bizwrap">${OFFERS.map(o=>`<span>${o.biz}</span>`).join("")}</div>
+    ${partners()}
+  </div>`;
+}
+function viewBuy(){
+  if(!SPORT) return viewSportPicker();
+  return `<div class="wrap">${header()}
+    ${BR().photo ? `<img class="hero" src="${BR().photo}" alt="${ORG} team photo">`
       : `<div class="hero-slot"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Team photo goes here<span class="small" style="font-weight:500">Coaches add it from the Coach tab</span></div>`}
     <h1>Back the teams. Save all year.</h1>
     <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports ${SCHOOL_FULL}.</p>
     ${passCard(true)}
     <div class="price"><b>$${PRICE}</b><span class="small">One pass, good for a full year</span></div>
-    ${ui.fromLink ? `<p class="supporting">You’re supporting ${esc(ui.team)}</p>` : ""}
+    ${ui.fromLink ? `<p class="supporting">You’re supporting ${esc(shortLabel(ui.team))}</p>` : ""}
     <label class="f" for="team">Which player gets credit?</label>
-    <select class="field" id="team">${TEAMS.map(t=>`<option${t===ui.team?" selected":""}>${t}</option>`).join("")}</select>
+    <select class="field" id="team">${sportTeams(SPORT).map(t=>`<option value="${esc(t)}"${t===ui.team?" selected":""}>${esc(shortLabel(t))}</option>`).join("")}</select>
+    <p class="small" style="margin:-6px 0 14px"><a class="linkbtn" href="${sportPath("")}">Supporting a different ${SC.mascot} team?</a></p>
     <button class="btn" data-action="checkout">Buy pass for $${PRICE}</button>
     <p class="small" style="margin-top:10px">A player’s personal link picks them automatically.</p>
     <h3>How it works</h3>
@@ -550,12 +603,48 @@ function teamSales(){
   return s;
 }
 function playerLink(t){
-  const m = t.match(/#(\d+)$/);
-  const base = location.origin + (location.hostname.split(".")[0]===SCHOOL ? "/" : SCHOOLS[SCHOOL].path);
+  const m = t.match(/#(\d+)$/); const sp = sportOf(t);
+  const base = location.origin + sportPath(sp ? sp.id : "");
   return m ? `${base}?player=${m[1]}` : base;
 }
+function brandingCard(){
+  const b = SPORT ? ((state.brand||{})[SPORT.id]||{}) : ((state.brand||{}).school||{});
+  const who = SPORT ? `${SPORT.name}` : `${SC.mascot} (school-wide)`;
+  return `<h3 style="margin-top:6px">${who} branding</h3>
+    <div class="brandgrid">
+      <div class="btile"><div class="pv">${b.logo?`<img src="${b.logo}" alt="Logo">`:"No logo yet"}</div>
+        <label class="copy" style="margin:0">${b.logo?"Change":"Upload"} logo<input type="file" accept="image/*" id="up-logo"></label>
+        ${b.logo?`<button class="linkbtn" data-action="brand-rm" data-k="logo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
+      <div class="btile"><div class="pv">${b.photo?`<img class="cover" src="${b.photo}" alt="Team photo">`:"No team photo yet"}</div>
+        <label class="copy" style="margin:0">${b.photo?"Change":"Upload"} team photo<input type="file" accept="image/*" id="up-photo"></label>
+        ${b.photo?`<button class="linkbtn" data-action="brand-rm" data-k="photo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
+    </div>
+    <p class="small">${SPORT ? `Shows on the ${SPORT.name} page, Wallet card and emails. If you skip it, the school’s logo and photo are used.` : "Used on the school page and for any team that hasn’t added its own."}</p>`;
+}
+function viewAD(){
+  const all = SPORTS.map(sp=>Object.assign({sp},sportStats(sp)));
+  const n = all.reduce((a,x)=>a+x.n,0);
+  return `<div class="wrap">${header()}
+    <p class="kicker">Athletic director</p>
+    <h2 style="margin-top:0">All ${SC.mascot} teams</h2>
+    <div class="stats">
+      <div class="stat"><b>$${(n*PRICE).toLocaleString()}</b><span class="small">Raised, all sports</span></div>
+      <div class="stat"><b>${n}</b><span class="small">Passes sold</span></div>
+    </div>
+    <h3>By sport</h3>
+    <div class="list">${all.sort((a,b)=>b.raised-a.raised).map(x=>`<a class="row" href="${sportPath(x.sp.id)}#coach" style="text-decoration:none;color:inherit;grid-template-columns:46px 1fr auto">
+      <span class="logo" style="background:var(--chip);font-size:24px" aria-hidden="true">${x.sp.icon}</span>
+      <div><div class="deal">${x.sp.name}</div><div class="small">${x.n} of ${x.sp.goal} passes · ${x.pct}%</div>
+        <div class="goal" style="padding:0;border:0;margin:6px 0 0;background:none"><div class="bar" style="margin:0;height:6px"><i style="width:${x.pct}%"></i></div></div></div>
+      <div class="cnt" style="text-align:right"><b style="font-size:18px">$${x.raised.toLocaleString()}</b><span class="small">Open ›</span></div></a>`).join("")}</div>
+    <p class="small" style="margin-top:10px">Each sport’s coach sees only their own team’s dashboard, players and share links.</p>
+    ${brandingCard()}
+    ${partners()}
+  </div>`;
+}
 function viewCoach(){
-  const s = teamSales();
+  if(!SPORT) return viewAD();
+  const s = {}; const all = teamSales(); sportTeams(SPORT).forEach(t=>s[t]=all[t]||0);
   const total = Object.values(s).reduce((a,b)=>a+b,0);
   const raised = total*PRICE;
   const pct = Math.min(100,Math.round(total/GOAL*100));
@@ -564,16 +653,8 @@ function viewCoach(){
   const redeemed = Object.values(BIZSTATS).reduce((a,b)=>a+b[1],0) + state.redemptions.length;
   return `<div class="wrap">${header()}
     <p class="kicker">Coach dashboard</p>
-    <h3 style="margin-top:6px">Team branding</h3>
-    <div class="brandgrid">
-      <div class="btile"><div class="pv">${state.brand.logo?`<img src="${state.brand.logo}" alt="Team logo">`:"No logo yet"}</div>
-        <label class="copy" style="margin:0">${state.brand.logo?"Change":"Upload"} logo<input type="file" accept="image/*" id="up-logo"></label>
-        ${state.brand.logo?`<button class="linkbtn" data-action="brand-rm" data-k="logo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
-      <div class="btile"><div class="pv">${state.brand.photo?`<img class="cover" src="${state.brand.photo}" alt="Team photo">`:"No team photo yet"}</div>
-        <label class="copy" style="margin:0">${state.brand.photo?"Change":"Upload"} team photo<input type="file" accept="image/*" id="up-photo"></label>
-        ${state.brand.photo?`<button class="linkbtn" data-action="brand-rm" data-k="photo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
-    </div>
-    <p class="small">The logo shows in the app header, on the Wallet card and in emails. The team photo sits at the top of your pass page.</p>
+    <p class="small" style="margin:-4px 0 8px"><a class="linkbtn" href="${sportPath("")}#coach">‹ All ${SC.mascot} teams</a></p>
+    ${brandingCard()}
     <h2 style="margin-top:0">Season fundraiser</h2>
     <div class="stats">
       <div class="stat"><b>$${raised.toLocaleString()}</b><span class="small">Raised</span></div>
@@ -584,7 +665,7 @@ function viewCoach(){
       <span class="small">${GOAL-total>0 ? `${GOAL-total} more passes to hit the goal.` : "Goal reached!"}</span></div>
     <h3>Player leaderboard</h3>
     <div class="list board">${rows.map(([t,n],i)=>`<div class="row"><span class="rank">${i+1}</span>
-      <div><div class="deal">${esc(t)}${state.purchased&&state.team===t?'<span class="youbadge">+1 you</span>':""}</div>
+      <div><div class="deal">${esc(shortLabel(t))}${state.purchased&&state.team===t?'<span class="youbadge">+1 you</span>':""}</div>
         <div class="mini"><i style="width:${Math.round(n/top*100)}%"></i></div>
         ${t.includes("#")?`<button class="copy" data-action="copy" data-link="${playerLink(t)}">Copy share link</button>`:""}</div>
       <div class="cnt"><b>${n}</b><span class="small">$${n*PRICE}</span></div></div>`).join("")}</div>
@@ -819,8 +900,8 @@ async function uploadBrand(k, file){
   if(!/^image\//.test(file.type)){ toast("Please choose an image file."); return; }
   try{
     const url = await shrinkImage(file, k==="logo"?256:1400, k==="logo"?"image/png":"image/jpeg");
-    const prev = state.brand[k]; state.brand[k] = url; save();
-    if(!localStorage.getItem(KEY) || !localStorage.getItem(KEY).includes(url.slice(-40))){ state.brand[k] = prev; save(); toast("That image is too large for the demo. Try a smaller one."); return; }
+    const tg = brandTarget(); const prev = tg[k]; tg[k] = url; save();
+    if(!localStorage.getItem(KEY) || !localStorage.getItem(KEY).includes(url.slice(-40))){ tg[k] = prev; save(); toast("That image is too large for the demo. Try a smaller one."); return; }
     render(); toast(k==="logo" ? "Logo updated." : "Team photo updated.");
   }catch(e){ toast("Couldn’t read that image. Try a JPG or PNG."); }
 }
@@ -833,12 +914,12 @@ function sheetWallet(w){
   openSheet(`<h2 style="margin-top:0">${w==="apple"?"Apple":"Google"} Wallet</h2>
     <p class="small">This is the card that gets added to their phone.</p>
     <div class="wcard">
-      <div class="wtop"><span style="display:flex;align-items:center;gap:8px">${state.brand.logo?`<img src="${state.brand.logo}" alt="" style="width:26px;height:26px;object-fit:contain;background:#fff;border-radius:6px;padding:2px">`:""}Home Field Advantage</span><span>2026–27</span></div>
+      <div class="wtop"><span style="display:flex;align-items:center;gap:8px">${BR().logo?`<img src="${BR().logo}" alt="" style="width:26px;height:26px;object-fit:contain;background:#fff;border-radius:6px;padding:2px">`:""}Home Field Advantage</span><span>2026–27</span></div>
       <div class="wnum">No. ${state.passNo}</div>
       <div class="wf">
         <div><span>Pass holder</span><b>${esc(state.name)}${state.member&&state.member.status==="active"?` + ${esc(state.member.name.split(" ")[0])}`:""}</b></div>
         <div><span>Valid through</span><b>Aug 31, 2027</b></div>
-        <div style="grid-column:1/-1"><span>Supporting</span><b>${esc(state.team)} · ${ORG}</b></div>
+        <div style="grid-column:1/-1"><span>Supporting</span><b>${esc(state.team)} · ${SC.short}</b></div>
       </div>
       <div class="wopen">Tap to open your pass and redeem</div>
     </div>
@@ -872,7 +953,7 @@ function sheetEmail(kind, id){
   }
   openSheet(`<h2 style="margin-top:0">Email preview</h2>
     <div class="mailmeta">${meta}</div>
-    <div class="mail"><div class="mh">${state.brand.logo?`<img src="${state.brand.logo}" alt="">`:shield}${ORG}</div><div class="mb">${body}</div>
+    <div class="mail"><div class="mh">${BR().logo?`<img src="${BR().logo}" alt="">`:shield}${ORG}</div><div class="mb">${body}</div>
       <div class="mf">Home Field Advantage · homefieldadvantage.deals<br>You’re getting this because of your Advantage Pass.</div></div>
     <p class="test" style="margin-top:14px">Demo preview. In the live app this is sent automatically.</p>
     <button class="btn" data-action="close">Done</button>`);
@@ -1130,7 +1211,7 @@ document.addEventListener("click", e=>{
     document.getElementById("lead").innerHTML = `<strong>Thanks, ${esc(g("ld-name").split(" ")[0])}!</strong><p class="small" style="margin:6px 0 0">We’ll be in touch about ${esc(g("ld-school")||"your program")} soon. (Demo: this form doesn’t send yet.)</p>`;
     return;
   }
-  if(a==="brand-rm"){ delete state.brand[t.dataset.k]; save(); render(); return; }
+  if(a==="brand-rm"){ delete brandTarget()[t.dataset.k]; save(); render(); return; }
   if(a==="wallet"){ sheetWallet(t.dataset.w); return; }
   if(a==="email"){ sheetEmail(t.dataset.e, t.dataset.id); return; }
   if(a==="hh-add"){ sheetHousehold(); return; }
@@ -1166,7 +1247,7 @@ function renderLanding(){
   [["--c-dark","#0A1F44"],["--c-main","#1D4ED8"],["--c-light","#3B82F6"],["--c-acc","#60A5FA"],["--c-acc2","#93C5FD"]].forEach(([k,v])=>st.setProperty(k,v));
   document.querySelector(".tabs").hidden = true;
   const card = id => { const sc = SCHOOLS[id], c = sc.colors;
-    let lg = null; try{ lg = (JSON.parse(localStorage.getItem("hfa-demo-v3-"+id))||{}).brand?.logo; }catch(e){}
+    let lg = null; try{ lg = ((JSON.parse(localStorage.getItem("hfa-demo-v4-"+id))||{}).brand||{}).school?.logo; }catch(e){}
     return `<a class="row" href="${sc.path}" style="text-decoration:none;color:inherit;grid-template-columns:52px 1fr auto">
       ${lg?`<img src="${lg}" alt="" style="width:52px;height:52px;object-fit:contain">`:`<span class="logo" style="width:52px;height:52px;background:linear-gradient(135deg,${c.dark},${c.main} 60%,${c.light});border:2px solid ${c.acc}" aria-hidden="true">${sc.mascot[0]}</span>`}
       <div><div class="deal">${sc.name} ${sc.mascot}</div><div class="small">${sc.town}, NE</div></div><span class="small">›</span></a>`; };
