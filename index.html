@@ -325,21 +325,21 @@ let BIZSTATS = {marios:[19,71],sunrise:[24,88],elsol:[31,102],scoops:[12,40],bow
 const SCHOOLS = {
   tigers:{name:"Dundy County-Stratton", mascot:"Tigers", short:"DCS Tigers", town:"Benkelman", path:"/tigers",
     sports:[
-      {id:"football",name:"Football",icon:"🏈",goal:150,fund:14,players:[[7,23],[12,17],[22,31],[54,9]]},
-      {id:"volleyball",name:"Volleyball",icon:"🏐",goal:80,fund:6,players:[[2,12],[9,18],[11,9],[15,14]]},
-      {id:"boys-basketball",name:"Boys Basketball",icon:"🏀",goal:80,fund:5,players:[[3,11],[10,15],[24,8]]},
-      {id:"girls-basketball",name:"Girls Basketball",icon:"🏀",goal:80,fund:7,players:[[4,9],[13,16],[21,12]]},
-      {id:"track",name:"Track & Field",icon:"🏃",goal:60,fund:4,players:[[5,10],[8,7]]}
+      {id:"football",coach:"Dan Weber",name:"Football",icon:"🏈",goal:150,fund:14,players:[[7,23],[12,17],[22,31],[54,9]]},
+      {id:"volleyball",coach:"Kara Lutz",name:"Volleyball",icon:"🏐",goal:80,fund:6,players:[[2,12],[9,18],[11,9],[15,14]]},
+      {id:"boys-basketball",coach:"Tom Fritzler",name:"Boys Basketball",icon:"🏀",goal:80,fund:5,players:[[3,11],[10,15],[24,8]]},
+      {id:"girls-basketball",coach:"Jill Hansen",name:"Girls Basketball",icon:"🏀",goal:80,fund:7,players:[[4,9],[13,16],[21,12]]},
+      {id:"track",coach:"Rob Kuhlman",name:"Track & Field",icon:"🏃",goal:60,fund:4,players:[[5,10],[8,7]]}
     ],
     colors:{dark:"#391213",main:"#7A1E2C",light:"#A8323F",acc:"#C9A227",acc2:"#E0B53E"}},
   bison:{name:"McCook", mascot:"Bison", short:"McCook Bison", town:"McCook", path:"/bison",
     sports:[
-      {id:"football",name:"Football",icon:"🏈",goal:200,fund:15,players:[[3,28],[21,19],[44,22]]},
-      {id:"volleyball",name:"Volleyball",icon:"🏐",goal:100,fund:9,players:[[8,34],[12,11],[17,15]]},
-      {id:"boys-basketball",name:"Boys Basketball",icon:"🏀",goal:100,fund:6,players:[[5,16],[23,13]]},
-      {id:"girls-basketball",name:"Girls Basketball",icon:"🏀",goal:100,fund:7,players:[[2,18],[14,10]]},
-      {id:"wrestling",name:"Wrestling",icon:"🤼",goal:60,fund:3,players:[[14,12],[31,9]]},
-      {id:"track",name:"Track & Field",icon:"🏃",goal:80,fund:5,players:[[6,11],[19,8]]}
+      {id:"football",coach:"Matt Ricketts",name:"Football",icon:"🏈",goal:200,fund:15,players:[[3,28],[21,19],[44,22]]},
+      {id:"volleyball",coach:"Erin Polk",name:"Volleyball",icon:"🏐",goal:100,fund:9,players:[[8,34],[12,11],[17,15]]},
+      {id:"boys-basketball",coach:"Steve Cramer",name:"Boys Basketball",icon:"🏀",goal:100,fund:6,players:[[5,16],[23,13]]},
+      {id:"girls-basketball",coach:"Amy Dietz",name:"Girls Basketball",icon:"🏀",goal:100,fund:7,players:[[2,18],[14,10]]},
+      {id:"wrestling",coach:"Josh Peck",name:"Wrestling",icon:"🤼",goal:60,fund:3,players:[[14,12],[31,9]]},
+      {id:"track",coach:"Lisa Vrbas",name:"Track & Field",icon:"🏃",goal:80,fund:5,players:[[6,11],[19,8]]}
     ],
     colors:{dark:"#3F0A0A",main:"#B91C1C",light:"#DC2626",acc:"#E5E7EB",acc2:"#F87171"}}
 };
@@ -388,6 +388,7 @@ if(SCHOOL && !SPORT && new URLSearchParams(location.search).get("player")) locat
 function sportPath(id){ return (SUBDOMAIN_MODE ? "/" : `/${SCHOOL}/`) + (id||""); }
 function sportOf(t){ return SPORTS.find(x=>t.startsWith(x.name+" · ")); }
 function shortLabel(t){ return SPORT ? t.split(" · ").slice(1).join(" · ") : t; }
+function coachOf(sp){ return Object.assign({name:"Coach "+sp.coach, contact:sp.coach.split(" ")[0].toLowerCase()+"@example.com"}, (state.coaches||{})[sp.id]||{}); }
 const sportTeams = sp => TEAMS.filter(t=>t.startsWith(sp.name+" · "));
 ORG = SPORT ? `${SC.short} ${SPORT.name}` : SC.short;
 SCHOOL_FULL = SPORT ? `${SC.name} ${SC.mascot} ${SPORT.name}` : `${SC.name} ${SC.mascot} Athletics`;
@@ -410,8 +411,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{}});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{}};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{}});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{}};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -452,7 +453,7 @@ function passCard(sample){
 
 const SHIELD = `<svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" style="fill:var(--c-main);stroke:var(--c-acc)" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" style="fill:var(--c-acc2)"/></svg>`;
 function BR(){ const b = state.brand||{}, sc = b.school||{}, sp = (SPORT && b[SPORT.id])||{}; return {logo:sp.logo||sc.logo, photo:sp.photo||sc.photo}; }
-function brandTarget(){ const id = SPORT ? SPORT.id : "school"; state.brand[id] = state.brand[id]||{}; return state.brand[id]; }
+function brandTarget(scope){ const id = scope || (SPORT ? SPORT.id : "school"); state.brand[id] = state.brand[id]||{}; return state.brand[id]; }
 function header(){ const L = SCHOOL && BR().logo; return `<div class="top">${L?`<img class="tlogo" src="${L}" alt="">`:SHIELD}${ORG}</div>`; }
 
 function partners(){
@@ -607,43 +608,55 @@ function playerLink(t){
   const base = location.origin + sportPath(sp ? sp.id : "");
   return m ? `${base}?player=${m[1]}` : base;
 }
-function brandingCard(){
-  const b = SPORT ? ((state.brand||{})[SPORT.id]||{}) : ((state.brand||{}).school||{});
-  const who = SPORT ? `${SPORT.name}` : `${SC.mascot} (school-wide)`;
-  return `<h3 style="margin-top:6px">${who} branding</h3>
-    <div class="brandgrid">
-      <div class="btile"><div class="pv">${b.logo?`<img src="${b.logo}" alt="Logo">`:"No logo yet"}</div>
-        <label class="copy" style="margin:0">${b.logo?"Change":"Upload"} logo<input type="file" accept="image/*" id="up-logo"></label>
-        ${b.logo?`<button class="linkbtn" data-action="brand-rm" data-k="logo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
-      <div class="btile"><div class="pv">${b.photo?`<img class="cover" src="${b.photo}" alt="Team photo">`:"No team photo yet"}</div>
-        <label class="copy" style="margin:0">${b.photo?"Change":"Upload"} team photo<input type="file" accept="image/*" id="up-photo"></label>
-        ${b.photo?`<button class="linkbtn" data-action="brand-rm" data-k="photo" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>
-    </div>
-    <p class="small">${SPORT ? `Shows on the ${SPORT.name} page, Wallet card and emails. If you skip it, the school’s logo and photo are used.` : "Used on the school page and for any team that hasn’t added its own."}</p>`;
+function brandingCard(scope){
+  scope = scope || (SPORT ? SPORT.id : "school");
+  const b = (state.brand||{})[scope]||{}; const sp = SPORTS.find(x=>x.id===scope);
+  const tile = (k,label,cls)=>`<div class="btile"><div class="pv">${b[k]?`<img${cls?` class="${cls}"`:""} src="${b[k]}" alt="${label}">`:`No ${label.toLowerCase()} yet`}</div>
+        <label class="copy" style="margin:0">${b[k]?"Change":"Upload"} ${label.toLowerCase()}<input type="file" accept="image/*" class="up" data-k="${k}" data-scope="${scope}"></label>
+        ${b[k]?`<button class="linkbtn" data-action="brand-rm" data-k="${k}" data-scope="${scope}" style="display:block;margin:4px auto 0;font-size:13px">Remove</button>`:""}</div>`;
+  return `<h3 style="margin-top:6px">${sp ? sp.name : `${SC.mascot} school-wide`} branding</h3>
+    <div class="brandgrid">${tile("logo","Logo","")}${tile("photo","Team photo","cover")}</div>
+    <p class="small">${sp ? `Shows on the ${sp.name} page, Wallet card and emails. If you skip it, the school’s logo and photo are used.` : "Used on the school’s team picker and for any team that hasn’t added its own."}</p>`;
 }
-function viewAD(){
+function adminTeams(){
   const all = SPORTS.map(sp=>Object.assign({sp},sportStats(sp)));
   const n = all.reduce((a,x)=>a+x.n,0);
-  return `<div class="wrap">${header()}
-    <p class="kicker">Athletic director</p>
-    <h2 style="margin-top:0">All ${SC.mascot} teams</h2>
+  return `<h2 style="margin-top:0">Teams & coaches</h2>
     <div class="stats">
       <div class="stat"><b>$${(n*PRICE).toLocaleString()}</b><span class="small">Raised, all sports</span></div>
       <div class="stat"><b>${n}</b><span class="small">Passes sold</span></div>
     </div>
-    <h3>By sport</h3>
-    <div class="list">${all.sort((a,b)=>b.raised-a.raised).map(x=>`<a class="row" href="${sportPath(x.sp.id)}#coach" style="text-decoration:none;color:inherit;grid-template-columns:46px 1fr auto">
+    <div class="list" style="margin-top:12px">${all.sort((a,b)=>b.raised-a.raised).map(x=>`<button class="row" data-action="adm-team" data-id="${x.sp.id}" style="grid-template-columns:46px 1fr auto">
       <span class="logo" style="background:var(--chip);font-size:24px" aria-hidden="true">${x.sp.icon}</span>
-      <div><div class="deal">${x.sp.name}</div><div class="small">${x.n} of ${x.sp.goal} passes · ${x.pct}%</div>
+      <div><div class="deal">${x.sp.name}</div><div class="small">${esc(coachOf(x.sp).name)} · ${x.pct}% of goal</div>
         <div class="goal" style="padding:0;border:0;margin:6px 0 0;background:none"><div class="bar" style="margin:0;height:6px"><i style="width:${x.pct}%"></i></div></div></div>
-      <div class="cnt" style="text-align:right"><b style="font-size:18px;display:block;font-family:var(--display);font-weight:800">$${x.raised.toLocaleString()}</b><span class="small">Open ›</span></div></a>`).join("")}</div>
-    <p class="small" style="margin-top:10px">Each sport’s coach sees only their own team’s dashboard, players and share links.</p>
-    ${brandingCard()}
-    ${partners()}
+      <div class="cnt" style="text-align:right"><b style="font-size:18px;display:block;font-family:var(--display);font-weight:800">$${x.raised.toLocaleString()}</b><span class="small">›</span></div></button>`).join("")}</div>
+    <p class="small" style="margin-top:10px">Each coach signs in with their own link and only sees their team’s dashboard, players and share links.</p>`;
+}
+function sheetTeam(id){
+  const sp = SPORTS.find(x=>x.id===id), c = coachOf(sp), st = sportStats(sp);
+  openSheet(`<div class="biz-head" style="margin-top:0"><span class="logo" style="background:var(--chip);font-size:24px" aria-hidden="true">${sp.icon}</span><div><div style="font-weight:700">${SC.mascot} ${sp.name}</div><div class="small">$${st.raised.toLocaleString()} raised · ${st.n} of ${sp.goal} passes</div></div></div>
+    <h3>Coach</h3>
+    <label class="f" for="co-name">Name</label><input class="field" id="co-name" value="${esc(c.name)}">
+    <label class="f" for="co-contact">Email or mobile</label><input class="field" id="co-contact" value="${esc(c.contact)}">
+    <button class="btn ghost" data-action="co-save" data-id="${sp.id}" style="margin-bottom:10px">Save coach</button>
+    <button class="btn ghost" data-action="co-invite" data-id="${sp.id}" style="margin-bottom:10px">Send coach sign-in link</button>
+    <p class="small">Changing the coach turns off the old coach’s access right away.</p>
+    <a class="btn" href="${sportPath(sp.id)}#coach" data-action="close">Open ${sp.name} coach view</a>
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Close</button>`);
+}
+function viewCoachSignIn(){
+  return `<div class="wrap">${header()}
+    <p class="kicker">Coaches</p>
+    <h2 style="margin-top:0">Coach sign-in</h2>
+    <p class="lede">Your athletic director sends you a sign-in link. It opens your team’s dashboard, and only your team’s.</p>
+    <label class="f" for="cs-contact">Email or mobile on file</label><input class="field" id="cs-contact" placeholder="coach@school.org">
+    <button class="btn" data-action="cs-send">Send my sign-in link</button>
+    <p class="small" style="margin-top:20px">Demo: to see a team’s coach view, open it from Admin → Teams & coaches.</p>
   </div>`;
 }
 function viewCoach(){
-  if(!SPORT) return viewAD();
+  if(!SPORT) return viewCoachSignIn();
   const s = {}; const all = teamSales(); sportTeams(SPORT).forEach(t=>s[t]=all[t]||0);
   const total = Object.values(s).reduce((a,b)=>a+b,0);
   const raised = total*PRICE;
@@ -653,7 +666,7 @@ function viewCoach(){
   const redeemed = Object.values(BIZSTATS).reduce((a,b)=>a+b[1],0) + state.redemptions.length;
   return `<div class="wrap">${header()}
     <p class="kicker">Coach dashboard</p>
-    <p class="small" style="margin:-4px 0 8px"><a class="linkbtn" href="${sportPath("")}#coach">‹ All ${SC.mascot} teams</a></p>
+    <div class="supporting" style="margin-top:6px">Signed in as ${esc(coachOf(SPORT).name)} · ${SPORT.name}</div>
     ${brandingCard()}
     <h2 style="margin-top:0">Season fundraiser</h2>
     <div class="stats">
@@ -676,7 +689,7 @@ function viewCoach(){
       <div class="stat"><b>${redeemed}</b><span class="small">Deals redeemed</span></div>
     </div>
     ${partners()}
-    <p class="small" style="margin-top:28px">Demo numbers. In the live app these update with every sale.</p>
+    <p class="small" style="margin-top:28px">Demo numbers. In the live app these update with every sale. Coaches only ever see their own team; to view another team’s coach view, open it from Admin → Teams & coaches.</p>
   </div>`;
 }
 
@@ -796,8 +809,10 @@ function viewAdmin(){
   const ready = ALLBIZ.filter(o=>o.status==="submitted");
   const n = changes.length + ready.length;
   return `<div class="wrap">${header()}
-    <p class="kicker">Admin</p>
-    <h2 style="margin-top:0">Approvals${n?` (${n})`:""}</h2>
+    <p class="kicker">Admin · ${SC.name} ${SC.mascot}</p>
+    ${adminTeams()}
+
+    <h2>Approvals${n?` (${n})`:""}</h2>
     ${ready.map(o=>`<div class="goal"><span class="tag">New deal</span>
         <div class="biz-head" style="margin:10px 0">${logo(o)}<div><div style="font-weight:700">${o.biz}</div><div class="small">Submitted ${fmtDay(new Date(o.submitted))} by ${esc(o.owner)}</div></div></div>
         <dl class="meta" style="margin:0 0 14px"><dt>Deal</dt><dd><strong>${esc(o.deal)}</strong></dd><dt>Use</dt><dd>${LIMIT[o.limit]}</dd><dt>Details</dt><dd>${esc(o.fine)}</dd><dt>Contract</dt><dd>${o.contract.level} · ${esc(o.contract.file)}</dd></dl>
@@ -819,7 +834,8 @@ function viewAdmin(){
     <div class="list">${ALLBIZ.map(o=>{ const [tag,cls] = BIZ_TAG(o);
       return `<button class="row" data-action="adm-biz" data-id="${o.id}">${logo(o)}<div><div class="biz">${o.biz}</div><div class="deal">${o.status==="invited"?"Deal not set up yet":esc(o.deal)}</div></div>
       <span class="tag ${cls}">${tag}</span></button>`;}).join("")}</div>
-    <p class="small" style="margin-top:12px">Coaches add each business with its signed agreement. The business gets a link to set up its deal, and it goes live after approval.</p>
+    <p class="small" style="margin-top:12px">Admins add each business with its signed agreement. The business gets a link to set up its deal, and it goes live after approval.</p>
+    ${brandingCard("school")}
     ${partners()}
   </div>`;
 }
@@ -895,12 +911,12 @@ function shrinkImage(file, max, type){
     fr.readAsDataURL(file);
   });
 }
-async function uploadBrand(k, file){
+async function uploadBrand(k, file, scope){
   if(!file) return;
   if(!/^image\//.test(file.type)){ toast("Please choose an image file."); return; }
   try{
     const url = await shrinkImage(file, k==="logo"?256:1400, k==="logo"?"image/png":"image/jpeg");
-    const tg = brandTarget(); const prev = tg[k]; tg[k] = url; save();
+    const tg = brandTarget(scope); const prev = tg[k]; tg[k] = url; save();
     if(!localStorage.getItem(KEY) || !localStorage.getItem(KEY).includes(url.slice(-40))){ tg[k] = prev; save(); toast("That image is too large for the demo. Try a smaller one."); return; }
     render(); toast(k==="logo" ? "Logo updated." : "Team photo updated.");
   }catch(e){ toast("Couldn’t read that image. Try a JPG or PNG."); }
@@ -1090,7 +1106,7 @@ function render(){
   const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : ui.view==="admin" ? viewAdmin() : (state.purchased ? viewPass() : viewBuy());
   app.innerHTML = roleBar() + body;
   document.querySelector(".tabs").hidden = ["coach","biz","admin"].includes(ui.view);
-  ["logo","photo"].forEach(k=>{ const el = document.getElementById("up-"+k); if(el) el.addEventListener("change", e=>uploadBrand(k, e.target.files[0])); });
+  document.querySelectorAll("input.up").forEach(el=>el.addEventListener("change", e=>uploadBrand(el.dataset.k, e.target.files[0], el.dataset.scope)));
   const hs = document.getElementById("hsearch");
   if(hs) hs.addEventListener("input", e=>{ ui.hq=e.target.value; document.getElementById("hlist").innerHTML = holderRows(); });
   document.getElementById("tab-offers").setAttribute("aria-current", ui.view==="offers"?"page":"false");
@@ -1211,7 +1227,15 @@ document.addEventListener("click", e=>{
     document.getElementById("lead").innerHTML = `<strong>Thanks, ${esc(g("ld-name").split(" ")[0])}!</strong><p class="small" style="margin:6px 0 0">We’ll be in touch about ${esc(g("ld-school")||"your program")} soon. (Demo: this form doesn’t send yet.)</p>`;
     return;
   }
-  if(a==="brand-rm"){ delete brandTarget()[t.dataset.k]; save(); render(); return; }
+  if(a==="brand-rm"){ delete brandTarget(t.dataset.scope)[t.dataset.k]; save(); render(); return; }
+  if(a==="adm-team"){ sheetTeam(t.dataset.id); return; }
+  if(a==="co-save"){
+    const nm = clean(document.getElementById("co-name").value), ct = clean(document.getElementById("co-contact").value);
+    if(!nm){ document.getElementById("co-name").focus(); return; }
+    state.coaches[t.dataset.id] = {name:nm, contact:ct}; save(); render(); sheetTeam(t.dataset.id); return;
+  }
+  if(a==="co-invite"){ const sp = SPORTS.find(x=>x.id===t.dataset.id); toast(`Sign-in link sent to ${esc(coachOf(sp).contact)}. It opens the ${sp.name} dashboard only.`); return; }
+  if(a==="cs-send"){ toast("If that matches a coach on file, a sign-in link is on its way."); return; }
   if(a==="wallet"){ sheetWallet(t.dataset.w); return; }
   if(a==="email"){ sheetEmail(t.dataset.e, t.dataset.id); return; }
   if(a==="hh-add"){ sheetHousehold(); return; }
