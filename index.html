@@ -379,9 +379,17 @@ if(SCHOOL==="bison"){
 const SC = SCHOOL ? SCHOOLS[SCHOOL] : SCHOOLS.tigers;
 const SPORTS = SC.sports;
 const fundLabel = sp => `${sp.name} · Team fund`;
-const playerLabel = (sp,n) => `${sp.name} · Sample Player #${n}`;
-SPORTS.forEach(sp=>{ TEAMS.push(fundLabel(sp)); SALES[fundLabel(sp)] = sp.fund;
-  sp.players.forEach(([n,c])=>{ TEAMS.push(playerLabel(sp,n)); SALES[playerLabel(sp,n)] = c; }); });
+const playerLabel = (sp,p) => `${sp.name} · ${p.name} #${p.num}`;
+function rosterOf(sp){
+  state.roster = state.roster || {};
+  if(!state.roster[sp.id]) state.roster[sp.id] = sp.players.map(([n,c])=>({id:"p"+n, num:String(n), name:"Sample Player", sold:c}));
+  return state.roster[sp.id];
+}
+function rebuildTeams(){
+  TEAMS.length = 0; Object.keys(SALES).forEach(k=>delete SALES[k]);
+  SPORTS.forEach(sp=>{ TEAMS.push(fundLabel(sp)); SALES[fundLabel(sp)] = sp.fund + ((state.fundExtra||{})[sp.id]||0);
+    rosterOf(sp).slice().sort((a,b)=>(+a.num)-(+b.num)).forEach(p=>{ TEAMS.push(playerLabel(sp,p)); SALES[playerLabel(sp,p)] = p.sold||0; }); });
+}
 let SPORT = SCHOOL ? SPORTS.find(x=>x.id===detectSport()) || null : null;
 // A player link without a sport (from before sports existed) goes to the first sport
 if(SCHOOL && !SPORT && new URLSearchParams(location.search).get("player")) location.replace(sportPath(SPORTS[0].id)+location.search+location.hash);
@@ -400,6 +408,7 @@ if(SCHOOL){ const c = SCHOOLS[SCHOOL].colors, st = document.documentElement.styl
 }
 
 let state = load();
+rebuildTeams();
 let ui = {view:"pass", cat:"All", q:"", team:SPORT ? sportTeams(SPORT)[0] : TEAMS[0], biz:BASE_OFFERS[0].id, fromLink:false};
 (function(){
   const p = new URLSearchParams(location.search).get("player");
@@ -411,8 +420,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{}});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{}};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -645,6 +654,27 @@ function sheetTeam(id){
     <a class="btn" href="${sportPath(sp.id)}#coach" data-action="close">Open ${sp.name} coach view</a>
     <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Close</button>`);
 }
+function sheetPlayer(id){
+  const p = id ? rosterOf(SPORT).find(x=>x.id===id) : {num:"",name:"",contact:""};
+  openSheet(`<h2 style="margin-top:0">${id?"Edit player":"Add a player"}</h2>
+    <div class="row2">
+      <div><label class="f" for="pl-num">Jersey #</label><input class="field" id="pl-num" inputmode="numeric" maxlength="3" value="${esc(p.num)}"></div>
+      <div><label class="f" for="pl-name">Name</label><input class="field" id="pl-name" autocomplete="off" value="${esc(p.name)}"></div>
+    </div>
+    <label class="f" for="pl-contact">Parent email or mobile <span class="small">(optional, for sending their share link)</span></label>
+    <input class="field" id="pl-contact" value="${esc(p.contact||"")}">
+    <p class="notice" id="pl-err" style="display:none"></p>
+    <button class="btn" data-action="ro-save" data-id="${id||""}">${id?"Save changes":"Add to roster"}</button>
+    ${id?`<button class="btn ghost" data-action="ro-remove" data-id="${id}" style="margin-top:10px">Remove from roster</button>
+      <p class="small" style="margin-top:8px">${p.sold?`${p.sold} pass${p.sold===1?"":"es"} already credited to ${esc(p.name.split(" ")[0])} stay counted in your team total.`:""}</p>`:""}
+    <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Cancel</button>`);
+}
+function relabel(oldL, newL){
+  if(oldL===newL) return;
+  if(state.team===oldL) state.team = newL;
+  if(ui.team===oldL) ui.team = newL;
+  (state.holders||[]).forEach(h=>{ if(h.team===oldL) h.team = newL; });
+}
 function viewCoachSignIn(){
   return `<div class="wrap">${header()}
     <p class="kicker">Coaches</p>
@@ -676,6 +706,10 @@ function viewCoach(){
     <div class="goal"><strong>${pct}% of goal</strong><span class="small"> · ${total} of ${GOAL} passes ($${(GOAL*PRICE).toLocaleString()})</span>
       <div class="bar"><i style="width:${pct}%"></i></div>
       <span class="small">${GOAL-total>0 ? `${GOAL-total} more passes to hit the goal.` : "Goal reached!"}</span></div>
+    <h3 style="display:flex;justify-content:space-between;align-items:center">Roster (${rosterOf(SPORT).length})<button class="copy" data-action="ro-add" style="margin:0">+ Add player</button></h3>
+    <div class="list">${rosterOf(SPORT).slice().sort((a,b)=>(+a.num)-(+b.num)).map(p=>`<button class="row" data-action="ro-edit" data-id="${p.id}" style="grid-template-columns:46px 1fr auto">
+      <span class="logo" style="background:var(--chip);color:var(--royal);font-family:var(--display);font-weight:800" aria-hidden="true">${esc(p.num)}</span>
+      <div><div class="deal">${esc(p.name)}</div><div class="small">#${esc(p.num)}${p.contact?` · ${esc(p.contact)}`:""}</div></div><span class="small">Edit</span></button>`).join("") || `<div class="empty">No players yet. Add your roster so each player gets a share link.</div>`}</div>
     <h3>Player leaderboard</h3>
     <div class="list board">${rows.map(([t,n],i)=>`<div class="row"><span class="rank">${i+1}</span>
       <div><div class="deal">${esc(shortLabel(t))}${state.purchased&&state.team===t?'<span class="youbadge">+1 you</span>':""}</div>
@@ -1228,6 +1262,26 @@ document.addEventListener("click", e=>{
     return;
   }
   if(a==="brand-rm"){ delete brandTarget(t.dataset.scope)[t.dataset.k]; save(); render(); return; }
+  if(a==="ro-add"){ sheetPlayer(null); return; }
+  if(a==="ro-edit"){ sheetPlayer(t.dataset.id); return; }
+  if(a==="ro-save"){
+    const num = clean(document.getElementById("pl-num").value).replace(/^#/,""), name = clean(document.getElementById("pl-name").value), contact = clean(document.getElementById("pl-contact").value);
+    const err = m=>{ const e = document.getElementById("pl-err"); e.textContent = m; e.style.display = "block"; };
+    if(!/^\d{1,3}$/.test(num)) return err("Enter a jersey number, like 22.");
+    if(!name) return err("Enter the player’s name.");
+    const ro = rosterOf(SPORT), id = t.dataset.id;
+    if(ro.some(x=>x.num===String(+num) && x.id!==id)) return err(`#${+num} is already on the roster.`);
+    if(id){ const p = ro.find(x=>x.id===id); const oldL = playerLabel(SPORT,p); Object.assign(p,{num:String(+num), name, contact}); relabel(oldL, playerLabel(SPORT,p)); }
+    else ro.push({id:"p"+Date.now(), num:String(+num), name, contact, sold:0});
+    rebuildTeams(); save(); render(); closeSheet(); return;
+  }
+  if(a==="ro-remove"){
+    const ro = rosterOf(SPORT), p = ro.find(x=>x.id===t.dataset.id);
+    // keep their sales in the team total by moving them to the team fund
+    const fundKeep = (state.fundExtra = state.fundExtra||{}); fundKeep[SPORT.id] = (fundKeep[SPORT.id]||0) + (p.sold||0);
+    relabel(playerLabel(SPORT,p), fundLabel(SPORT));
+    state.roster[SPORT.id] = ro.filter(x=>x!==p); rebuildTeams(); save(); render(); closeSheet(); return;
+  }
   if(a==="adm-team"){ sheetTeam(t.dataset.id); return; }
   if(a==="co-save"){
     const nm = clean(document.getElementById("co-name").value), ct = clean(document.getElementById("co-contact").value);
