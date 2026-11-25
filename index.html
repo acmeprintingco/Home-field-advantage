@@ -13,7 +13,8 @@
 :root{
   color-scheme: light;
   --bg:#FAF7F2; --surface:#FFFFFF; --ink:#24100F; --muted:#6E5D59; --line:#EBE1D6;
-  --royal:#7A1E2C; --royal-ink:#FFFFFF; --gold:#C9A227; --gold-ink:#FFFFFF;
+  --c-dark:var(--c-dark); --c-main:var(--c-main); --c-light:var(--c-light); --c-acc:var(--c-acc); --c-acc2:var(--c-acc2);
+  --royal:var(--c-main); --royal-ink:#FFFFFF; --gold:var(--c-acc); --gold-ink:#FFFFFF;
   --chip:#F3E9DC; --warn:#9A5B00;
   --display:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --body:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -25,13 +26,13 @@
   :root:not([data-theme="light"]){
     color-scheme: dark;
     --bg:#140809; --surface:#22100F; --ink:#FBF1E6; --muted:#BFA9A2; --line:#3A1F1D;
-    --royal:#E0B53E; --royal-ink:#2A0E0C; --gold:#E0B53E; --chip:#2E1716; --warn:#FFC86B;
+    --royal:var(--c-acc2); --royal-ink:#1A0A09; --gold:var(--c-acc2); --chip:#2E1716; --warn:#FFC86B;
   }
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
   --bg:#140809; --surface:#22100F; --ink:#FBF1E6; --muted:#BFA9A2; --line:#3A1F1D;
-  --royal:#E0B53E; --royal-ink:#2A0E0C; --gold:#E0B53E; --chip:#2E1716; --warn:#FFC86B;
+  --royal:var(--c-acc2); --royal-ink:#1A0A09; --gold:var(--c-acc2); --chip:#2E1716; --warn:#FFC86B;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
@@ -52,8 +53,8 @@ p{margin:0 0 14px}
 
 /* The pass: the one bold element */
 .pass{position:relative;color:#fff;border-radius:26px;padding:20px 24px 22px;overflow:hidden;margin:22px 0;
-  background:radial-gradient(circle at 88% 12%,rgba(224,181,62,.45),transparent 42%),linear-gradient(135deg,#391213 0%,#7A1E2C 55%,#A8323F 100%);
-  box-shadow:0 24px 48px -22px rgba(122,30,44,.6)}
+  background:radial-gradient(circle at 88% 12%,color-mix(in srgb,var(--c-acc2) 45%,transparent),transparent 42%),linear-gradient(135deg,var(--c-dark) 0%,var(--c-main) 55%,var(--c-light) 100%);
+  box-shadow:0 24px 48px -22px color-mix(in srgb,var(--c-main) 60%,transparent)}
 .pass::after{content:"";position:absolute;right:-70px;bottom:-90px;width:230px;height:230px;border-radius:50%;
   border:30px solid rgba(255,255,255,.09)}
 .pass-top{display:flex;justify-content:space-between;font-weight:700;font-size:14px;padding-right:76px}
@@ -77,7 +78,7 @@ p{margin:0 0 14px}
 label.f{display:block;font-weight:700;font-size:15px;margin:0 0 6px}
 .field{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:14px}
 .field:focus{border-color:var(--royal);outline:none}
-.btn{display:block;width:100%;background:var(--royal);color:var(--royal-ink);border:0;border-radius:999px;padding:16px;font-weight:700;font-size:17px;box-shadow:0 10px 24px -12px rgba(122,30,44,.7);cursor:pointer;text-align:center;text-decoration:none}
+.btn{display:block;width:100%;background:var(--royal);color:var(--royal-ink);border:0;border-radius:999px;padding:16px;font-weight:700;font-size:17px;box-shadow:0 10px 24px -12px color-mix(in srgb,var(--c-main) 70%,transparent);cursor:pointer;text-align:center;text-decoration:none}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .linkbtn{background:none;border:0;color:var(--royal);font-weight:700;padding:6px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
@@ -133,10 +134,10 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .notice{color:var(--warn);font-weight:700;font-size:15px;margin:-6px 0 14px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .test{font-size:13px;background:var(--chip);border-radius:8px;padding:8px 12px;margin:0 0 14px}
-.ok{width:72px;height:72px;border-radius:50%;background:#7A1E2C;display:grid;place-items:center;margin:8px auto 14px}
+.ok{width:72px;height:72px;border-radius:50%;background:var(--c-main);display:grid;place-items:center;margin:8px auto 14px}
 
 /* Redemption screen */
-.redeem{position:fixed;inset:0;z-index:60;background:linear-gradient(160deg,#391213 0%,#7A1E2C 60%,#A8323F 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+.redeem{position:fixed;inset:0;z-index:60;background:linear-gradient(160deg,var(--c-dark) 0%,var(--c-main) 60%,var(--c-light) 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));overflow:hidden}
 .redeem::before{content:"";position:absolute;inset:-60%;background:repeating-linear-gradient(45deg,rgba(255,255,255,.09) 0 24px,transparent 24px 48px);animation:slide 1.6s linear infinite}
 @keyframes slide{to{transform:translateX(67.88px)}}
@@ -148,14 +149,14 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .redeem .clock{font-family:var(--display);font-weight:800;font-size:clamp(56px,17vw,88px);line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .redeem .r-date{font-size:17px;margin:6px 0 18px}
 .redeem .r-pass{background:rgba(0,0,0,.22);border-radius:12px;padding:10px 16px;font-size:15px;margin-bottom:24px}
-.redeem .btn{background:#fff;color:#7A1E2C;max-width:320px}
+.redeem .btn{background:#fff;color:var(--c-main);max-width:320px}
 .redeem .hint{font-size:13px;opacity:.85;margin-top:14px;max-width:30ch}
 
 /* Welcome tour */
 .scrim.center{align-items:center;padding:20px}
 .welcome{background:var(--bg);width:100%;max-width:420px;border-radius:28px;padding:30px 24px 22px;text-align:center;animation:up .25s ease-out}
 .w-icon{width:84px;height:84px;border-radius:26px;margin:0 auto 18px;display:grid;place-items:center;color:#fff;
-  background:radial-gradient(circle at 80% 15%,rgba(224,181,62,.6),transparent 50%),linear-gradient(135deg,#391213,#7A1E2C 60%,#A8323F);box-shadow:0 16px 30px -16px rgba(122,30,44,.7)}
+  background:radial-gradient(circle at 80% 15%,color-mix(in srgb,var(--c-acc2) 60%,transparent),transparent 50%),linear-gradient(135deg,var(--c-dark),var(--c-main) 60%,var(--c-light));box-shadow:0 16px 30px -16px color-mix(in srgb,var(--c-main) 70%,transparent)}
 .w-step{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:0 0 6px}
 .welcome h2{margin:0 0 10px}
 .welcome .w-body{color:var(--muted);min-height:100px;margin:0 0 8px}
@@ -176,7 +177,7 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--royal);font-weight:800;margin:22px 0 4px}
 .goal{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin:12px 0}
 .goal .bar{height:12px;border-radius:99px;background:var(--chip);overflow:hidden;margin:10px 0 6px}
-.goal .bar i{display:block;height:100%;background:linear-gradient(90deg,#7A1E2C,#C9A227);border-radius:99px}
+.goal .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--c-main),var(--c-acc));border-radius:99px}
 .board .row{cursor:default;grid-template-columns:30px 1fr auto;gap:12px}
 .board .row:hover{background:none}
 .rank{font-family:var(--display);font-weight:800;font-size:20px;color:var(--muted);text-align:center}
@@ -205,10 +206,22 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 <div id="layer"></div>
 
 <script>
-const ORG = "DCS Tigers Football";
+/* ---------- Which school is this? ---------- */
+const SCHOOL_IDS = ["tigers","bison"];
+function detectSchool(){
+  const sub = location.hostname.split(".")[0].toLowerCase();
+  if(location.hostname.split(".").length>=3 && SCHOOL_IDS.includes(sub)) return sub;
+  const seg = (location.pathname.split("/").filter(Boolean)[0]||"").toLowerCase();
+  return SCHOOL_IDS.includes(seg) ? seg : null;
+}
+// Links shared before schools existed (homefieldadvantage.deals/?player=22) belong to the Tigers
+if(!detectSchool() && new URLSearchParams(location.search).get("player")) location.replace("/tigers"+location.search+location.hash);
+const SCHOOL = detectSchool();
+let SCHOOL_FULL = "Dundy County-Stratton Tigers Football";
+let ORG = "DCS Tigers Football";
 const PRICE = 25;
-const TEAMS = ["Tigers Football team fund","Sample Player #7","Sample Player #12","Sample Player #22","Sample Player #54"];
-const BASE_OFFERS = [
+let TEAMS = ["Tigers Football team fund","Sample Player #7","Sample Player #12","Sample Player #22","Sample Player #54"];
+let BASE_OFFERS = [
   {id:"marios",biz:"Mario’s Brick Oven",deal:"$5 off any large pizza",cat:"Food",limit:"monthly",value:5,color:"#C2410C",fine:"Dine-in or pickup. Can’t be combined with other offers.",addr:"214 Main St"},
   {id:"sunrise",biz:"Sunrise Coffee Co.",deal:"Free pastry with any drink",cat:"Food",limit:"monthly",value:4,color:"#7C4A2D",fine:"One pastry per visit. Any size drink.",addr:"9 Depot Square"},
   {id:"elsol",biz:"Taqueria El Sol",deal:"Free chips & queso with any entrée",cat:"Food",limit:"unlimited",value:6,color:"#B91C1C",fine:"Dine-in only.",addr:"77 River Rd"},
@@ -224,10 +237,10 @@ const BASE_OFFERS = [
 const LIMIT = {once:"One time",monthly:"Once a month",unlimited:"Every visit"};
 const GENEROSITY = {once:0,monthly:1,unlimited:2};
 const NEW_COLORS = ["#0F766E","#A16207","#7E22CE","#BE123C","#15803D","#1D4ED8"];
-const SEED_PENDING = [
+let SEED_PENDING = [
   {pid:"p1",type:"change",offerId:"bowl",ts:Date.now()-5*3600e3,proposed:{deal:"Free shoe rental for up to 2",limit:"monthly"}}
 ];
-const SEED_ADDED = [
+let SEED_ADDED = [
   {id:"prairie",biz:"Prairie Rose Bakery",cat:"Food",addr:"712 Chief St",owner:"Linda Weers",contact:"(308) 555-0177",color:"#A16207",value:4,
    contract:{file:"Prairie-Rose-partner-agreement.pdf",level:"Community MVP",ends:"2027-08-31"},status:"submitted",submitted:Date.now()-26*3600e3,
    deal:"Free cookie with any coffee",limit:"monthly",fine:"One cookie per visit."},
@@ -235,7 +248,7 @@ const SEED_ADDED = [
    contract:{file:"Flower-Shop-agreement.pdf",level:"Community MVP",ends:"2027-08-31"},status:"invited",invited:Date.now()-2*86400e3}
 ];
 const H = (d,h)=>Date.now()-d*86400e3-h*3600e3;
-const SEED_HOLDERS = [
+let SEED_HOLDERS = [
   {passNo:"214",name:"Megan Schultz",email:"megan.schultz@example.com",team:"Sample Player #22",member:{name:"Kyle Schultz",status:"active"},log:[],
    redemptions:[{offerId:"marios",ts:H(0,2.2),by:"Kyle Schultz"},{offerId:"sunrise",ts:H(4,1),by:"Megan Schultz"}]},
   {passNo:"187",name:"Tyler Harsh",email:"tharsh@example.com",team:"Sample Player #7",member:null,log:[],
@@ -246,7 +259,7 @@ const SEED_HOLDERS = [
    redemptions:[{offerId:"cuts",ts:H(3,2),by:"Dan Novak"},{offerId:"bowl",ts:H(9,5),by:"Lori Novak"}]}
 ];
 const LEVELS = ["Community MVP","Conference Partner","Presenting Partner"];
-const OWNERS = {marios:"Mario Rossi",sunrise:"Jen Haddix",elsol:"Luis Ortega",scoops:"Becky Lambert",bowl:"Gary Pfeifer",cinema:"Tom Weller",shack:"Brett Kunkel",hardware:"Dale Shaw",bloom:"Amy Kenney",wash:"Chris Odle",cuts:"Marcus Bell"};
+let OWNERS = {marios:"Mario Rossi",sunrise:"Jen Haddix",elsol:"Luis Ortega",scoops:"Becky Lambert",bowl:"Gary Pfeifer",cinema:"Tom Weller",shack:"Brett Kunkel",hardware:"Dale Shaw",bloom:"Amy Kenney",wash:"Chris Odle",cuts:"Marcus Bell"};
 let ALLBIZ = [];
 let OFFERS = [];
 function rebuildOffers(){
@@ -258,12 +271,61 @@ function rebuildOffers(){
 }
 function clean(v){ return String(v||"").replace(/[<>]/g,"").trim(); }
 const CATS = ["All","Food","Fun","Shopping","Services"];
-const KEY = "hometown-pass-demo-v2";
+let KEY = "hfa-demo-v3-tigers";
 
 /* Demo numbers for the coach and business views */
-const GOAL = 150;
-const SALES = {"Tigers Football team fund":14,"Sample Player #7":23,"Sample Player #12":17,"Sample Player #22":31,"Sample Player #54":9};
-const BIZSTATS = {marios:[19,71],sunrise:[24,88],elsol:[31,102],scoops:[12,40],bowl:[8,27],cinema:[15,49],shack:[6,21],hardware:[9,30],bloom:[4,13],wash:[7,26],cuts:[11,38]};
+let GOAL = 150;
+let SALES = {"Tigers Football team fund":14,"Sample Player #7":23,"Sample Player #12":17,"Sample Player #22":31,"Sample Player #54":9};
+let BIZSTATS = {marios:[19,71],sunrise:[24,88],elsol:[31,102],scoops:[12,40],bowl:[8,27],cinema:[15,49],shack:[6,21],hardware:[9,30],bloom:[4,13],wash:[7,26],cuts:[11,38]};
+
+/* ---------- School settings ---------- */
+const SCHOOLS = {
+  tigers:{name:"Dundy County-Stratton", mascot:"Tigers", town:"Benkelman", path:"/tigers",
+    colors:{dark:"#391213",main:"#7A1E2C",light:"#A8323F",acc:"#C9A227",acc2:"#E0B53E"}},
+  bison:{name:"McCook", mascot:"Bison", town:"McCook", path:"/bison",
+    colors:{dark:"#3F0A0A",main:"#B91C1C",light:"#DC2626",acc:"#E5E7EB",acc2:"#F87171"}}
+};
+if(SCHOOL==="bison"){
+  ORG = "McCook Bison Athletics";
+  SCHOOL_FULL = "McCook Bison Athletics";
+  TEAMS = ["Bison Athletics fund","Football · Sample Player #3","Football · Sample Player #21","Volleyball · Sample Player #8","Wrestling · Sample Player #14","Basketball · Sample Player #5"];
+  BASE_OFFERS = [
+    {id:"diner",biz:"Norris Ave Diner",deal:"Free coffee with any breakfast",cat:"Food",limit:"monthly",value:3,color:"#9A3412",fine:"Dine-in only. Breakfast served until 11 am.",addr:"210 Norris Ave"},
+    {id:"pizza",biz:"Red Willow Pizza Co.",deal:"$5 off any large pizza",cat:"Food",limit:"monthly",value:5,color:"#B91C1C",fine:"Dine-in or pickup.",addr:"118 W B St"},
+    {id:"bean",biz:"Bison Bean Coffee",deal:"Second drink half off",cat:"Food",limit:"unlimited",value:3,color:"#78350F",fine:"Equal or lesser value.",addr:"402 Norris Ave"},
+    {id:"lanes",biz:"Frontier Lanes",deal:"One free game per visit",cat:"Fun",limit:"unlimited",value:5,color:"#6D28D9",fine:"Shoe rental not included.",addr:"1501 W 5th St"},
+    {id:"cinema",biz:"Prairie Cinema 4",deal:"$2 off any movie ticket",cat:"Fun",limit:"unlimited",value:2,color:"#1E3A8A",fine:"One ticket per visit.",addr:"220 Norris Ave"},
+    {id:"outfit",biz:"High Plains Outfitters",deal:"20% off one item",cat:"Shopping",limit:"once",value:15,color:"#166534",fine:"Full-price items only.",addr:"1209 E 11th St"},
+    {id:"hardware",biz:"Heritage Hardware",deal:"10% off your purchase",cat:"Shopping",limit:"once",value:8,color:"#B45309",fine:"Excludes power tools and gift cards.",addr:"906 W 1st St"},
+    {id:"wash",biz:"Sparkle Express Wash",deal:"$8 off the top wash",cat:"Services",limit:"once",value:8,color:"#0E7490",fine:"Can’t be combined with memberships.",addr:"1810 E 11th St"},
+    {id:"barber",biz:"Main Street Barber Co.",deal:"$5 off any haircut",cat:"Services",limit:"monthly",value:5,color:"#334155",fine:"Walk-ins and appointments.",addr:"305 Norris Ave"}
+  ];
+  OWNERS = {diner:"Carol Hinz",pizza:"Nick Bauer",bean:"Tasha Molcyk",lanes:"Ron Sis",cinema:"Pete Garcia",outfit:"Jared Hoyt",hardware:"Bill Stamm",wash:"Kelsey Ruff",barber:"Andre Collins"};
+  SEED_PENDING = [{pid:"p1",type:"change",offerId:"lanes",ts:Date.now()-7*3600e3,proposed:{deal:"One free game per month",limit:"monthly"}}];
+  SEED_ADDED = [
+    {id:"smoke",biz:"Sandhills Smokehouse",cat:"Food",addr:"1102 W B St",owner:"Dustin Kaiser",contact:"(308) 555-0193",color:"#7C2D12",value:4,
+     contract:{file:"Smokehouse-partner-agreement.pdf",level:"Conference Partner",ends:"2027-08-31"},status:"submitted",submitted:Date.now()-20*3600e3,
+     deal:"Free side with any plate",limit:"monthly",fine:"Dine-in or carryout."},
+    {id:"floral",biz:"McCook Floral",cat:"Shopping",addr:"315 Norris Ave",owner:"Janet Ochsner",contact:"janet@mccookfloral.example",color:"#9D174D",value:5,
+     contract:{file:"McCook-Floral-agreement.pdf",level:"Community MVP",ends:"2027-08-31"},status:"invited",invited:Date.now()-3*86400e3}
+  ];
+  SEED_HOLDERS = [
+    {passNo:"318",name:"Brooke Wilkinson",email:"brooke.w@example.com",team:"Volleyball · Sample Player #8",member:{name:"Cody Wilkinson",status:"active"},log:[],
+     redemptions:[{offerId:"pizza",ts:H(0,3),by:"Cody Wilkinson"},{offerId:"bean",ts:H(2,1),by:"Brooke Wilkinson"}]},
+    {passNo:"244",name:"Ryan Pankonin",email:"rpankonin@example.com",team:"Football · Sample Player #21",member:null,log:[],
+     redemptions:[{offerId:"outfit",ts:H(0,22),by:"Ryan Pankonin"}]},
+    {passNo:"157",name:"Kari Schlake",email:"karis@example.com",team:"Bison Athletics fund",member:null,log:[],
+     redemptions:[{offerId:"diner",ts:H(1,4),by:"Kari Schlake"},{offerId:"wash",ts:H(6,2),by:"Kari Schlake"}]}
+  ];
+  GOAL = 250;
+  SALES = {"Bison Athletics fund":22,"Football · Sample Player #3":28,"Football · Sample Player #21":19,"Volleyball · Sample Player #8":34,"Wrestling · Sample Player #14":12,"Basketball · Sample Player #5":16};
+  BIZSTATS = {diner:[27,96],pizza:[22,81],bean:[41,150],lanes:[11,37],cinema:[18,62],outfit:[7,24],hardware:[10,33],wash:[9,30],barber:[14,47]};
+  KEY = "hfa-demo-v3-bison";
+}
+if(SCHOOL){ const c = SCHOOLS[SCHOOL].colors, st = document.documentElement.style;
+  st.setProperty("--c-dark",c.dark); st.setProperty("--c-main",c.main); st.setProperty("--c-light",c.light); st.setProperty("--c-acc",c.acc); st.setProperty("--c-acc2",c.acc2);
+  document.title = `Home Field Advantage – ${SCHOOLS[SCHOOL].name} ${SCHOOLS[SCHOOL].mascot}`;
+}
 
 let state = load();
 let ui = {view:"pass", cat:"All", q:"", team:TEAMS[0], biz:BASE_OFFERS[0].id, fromLink:false};
@@ -317,7 +379,7 @@ function passCard(sample){
   </div>`;
 }
 
-const header = `<div class="top"><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" fill="#7A1E2C" stroke="#C9A227" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" fill="#E0B53E"/></svg>${ORG}</div>`;
+const header = `<div class="top"><svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" style="fill:var(--c-main);stroke:var(--c-acc)" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" style="fill:var(--c-acc2)"/></svg>${ORG}</div>`;
 
 function partners(){
   return `<section class="partners" aria-label="Platform Partners">
@@ -360,7 +422,7 @@ function renderWelcome(){
 function viewBuy(){
   return `<div class="wrap">${header}
     <h1>Back the teams. Save all year.</h1>
-    <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports Dundy County-Stratton Tigers Football.</p>
+    <p class="lede">The Advantage Pass unlocks ${OFFERS.length} deals at local businesses through Aug 31, 2027. Every dollar supports ${SCHOOL_FULL}.</p>
     ${passCard(true)}
     <div class="price"><b>$${PRICE}</b><span class="small">One pass, good for a full year</span></div>
     ${ui.fromLink ? `<p class="supporting">You’re supporting ${esc(ui.team)}</p>` : ""}
@@ -442,7 +504,7 @@ function teamSales(){
 }
 function playerLink(t){
   const m = t.match(/#(\d+)$/);
-  const base = location.origin + location.pathname;
+  const base = location.origin + (location.hostname.split(".")[0]===SCHOOL ? "/" : SCHOOLS[SCHOOL].path);
   return m ? `${base}?player=${m[1]}` : base;
 }
 function viewCoach(){
@@ -785,7 +847,7 @@ function showRedeemed(id, sample){
   closeSheet();
   const el = document.createElement("div");
   el.className = "redeem"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Deal redeemed");
-  el.innerHTML = `<div class="check"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#7A1E2C" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+  el.innerHTML = `<div class="check"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" style="stroke:var(--c-main)" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
     <div class="r-biz">${o.biz}</div>
     <div class="r-deal">${o.deal}</div>
     <div class="clock" id="clock" aria-live="off"></div>
@@ -926,6 +988,12 @@ document.addEventListener("click", e=>{
     holderLog(h, `Undid ${o.biz} (${fmtDay(new Date(r.ts))}): ${ui.undoReason}`);
     save(); render(); sheetHolder(ui.holder, `${o.biz} deal given back.`); return;
   }
+  if(a==="lead-send"){
+    const g = id=>clean(document.getElementById(id).value);
+    if(!g("ld-name") || !g("ld-contact")){ document.getElementById(!g("ld-name")?"ld-name":"ld-contact").focus(); return; }
+    document.getElementById("lead").innerHTML = `<strong>Thanks, ${esc(g("ld-name").split(" ")[0])}!</strong><p class="small" style="margin:6px 0 0">We’ll be in touch about ${esc(g("ld-school")||"your program")} soon. (Demo: this form doesn’t send yet.)</p>`;
+    return;
+  }
   if(a==="hh-add"){ sheetHousehold(); return; }
   if(a==="hh-send"){
     const n = document.getElementById("hn").value.trim(), c = document.getElementById("hc").value.trim();
@@ -952,10 +1020,46 @@ document.addEventListener("click", e=>{
   if(a==="done"){ clearInterval(clockTimer); document.getElementById("layer").innerHTML=""; render(); }
   if(a==="reset"){ state = load.blank(); state.seenWelcome=true; save(); location.hash="pass"; render(); window.scrollTo(0,0); wStep=0; renderWelcome(); }
 });
+/* ---------- Main site (no school picked) ---------- */
+function renderLanding(){
+  document.title = "Home Field Advantage – the fundraising pass for your hometown team";
+  const st = document.documentElement.style;
+  [["--c-dark","#0A1F44"],["--c-main","#1D4ED8"],["--c-light","#3B82F6"],["--c-acc","#60A5FA"],["--c-acc2","#93C5FD"]].forEach(([k,v])=>st.setProperty(k,v));
+  document.querySelector(".tabs").hidden = true;
+  const card = id => { const sc = SCHOOLS[id], c = sc.colors;
+    return `<a class="row" href="${sc.path}" style="text-decoration:none;color:inherit;grid-template-columns:52px 1fr auto">
+      <span class="logo" style="width:52px;height:52px;background:linear-gradient(135deg,${c.dark},${c.main} 60%,${c.light});border:2px solid ${c.acc}" aria-hidden="true">${sc.mascot[0]}</span>
+      <div><div class="deal">${sc.name} ${sc.mascot}</div><div class="small">${sc.town}, NE</div></div><span class="small">›</span></a>`; };
+  document.getElementById("app").innerHTML = `<div class="wrap">
+    ${header.replace(ORG,"Home Field Advantage")}
+    <h1>The fundraising pass your whole town uses.</h1>
+    <p class="lede">Fans buy one pass, save at local businesses all season, and every dollar goes to the team. No candy bars, no cookie dough, no app to download.</p>
+    <h3>Find your school</h3>
+    <div class="list">${SCHOOL_IDS.map(card).join("")}</div>
+    <h3>How it works</h3>
+    <ol class="steps">
+      <li><span><strong>Teams</strong> sign up local businesses and give every player a personal share link.</span></li>
+      <li><span><strong>Fans</strong> buy a pass on their phone and credit the player who sent it.</span></li>
+      <li><span><strong>Businesses</strong> get new customers in the door, and the pass tracks every visit.</span></li>
+    </ol>
+    <div class="goal" style="margin-top:26px" id="lead">
+      <strong>Bring Home Field Advantage to your school</strong>
+      <p class="small" style="margin:6px 0 12px">Tell us about your program and we’ll set up a free demo with your colors and your local businesses.</p>
+      <label class="f" for="ld-name">Your name</label><input class="field" id="ld-name" autocomplete="name">
+      <label class="f" for="ld-school">School and team</label><input class="field" id="ld-school" placeholder="e.g. Hayes Center Cardinals football">
+      <label class="f" for="ld-contact">Email or mobile</label><input class="field" id="ld-contact">
+      <button class="btn" data-action="lead-send">Request a demo</button>
+    </div>
+    <p class="small" style="margin:28px 0 10px;text-align:center">homefieldadvantage.deals</p>
+  </div>`;
+}
+
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".scrim")) closeSheet(); });
-window.addEventListener("hashchange", ()=>{ route(); window.scrollTo(0,0); });
-route();
-if(!state.seenWelcome){ state.seenWelcome=true; save(); wStep=0; renderWelcome(); }
+window.addEventListener("hashchange", ()=>{ if(!SCHOOL) return; route(); window.scrollTo(0,0); });
+if(SCHOOL){
+  route();
+  if(!state.seenWelcome){ state.seenWelcome=true; save(); wStep=0; renderWelcome(); }
+} else renderLanding();
 </script>
 </body>
 </html>
