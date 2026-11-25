@@ -189,6 +189,33 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .biz-head{display:flex;align-items:center;gap:14px;margin:18px 0 6px}
 .biz-head .logo{width:58px;height:58px;font-size:20px;flex:none}
 .youbadge{display:inline-block;font-size:12px;font-weight:800;background:var(--royal);color:var(--royal-ink);border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+/* Wallet + email previews */
+.walletbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 4px}
+.wbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:#000;color:#fff;border:0;border-radius:12px;padding:11px 8px;font-weight:700;font-size:14px;cursor:pointer;line-height:1.15;text-align:left}
+.wbtn small{display:block;font-weight:500;font-size:11px;opacity:.85}
+.wcard{border-radius:16px;color:#fff;padding:16px 18px 18px;margin:6px 0 18px;background:linear-gradient(150deg,var(--c-dark),var(--c-main) 65%,var(--c-light));box-shadow:0 18px 36px -18px rgba(0,0,0,.6)}
+.wcard .wtop{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.wcard .wnum{font-family:var(--display);font-weight:800;font-size:54px;line-height:1;letter-spacing:-.04em;margin:18px 0 14px}
+.wcard .wf{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.wcard .wf span{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;font-weight:700}
+.wcard .wf b{font-size:15px}
+.wcard .wopen{margin-top:16px;background:rgba(255,255,255,.16);border-radius:10px;padding:10px;text-align:center;font-weight:700;font-size:14px}
+.lock{background:linear-gradient(160deg,#1f2937,#111827);border-radius:20px;padding:22px 14px 16px;margin:4px 0 8px}
+.lock .ltime{color:#fff;text-align:center;font-family:var(--display);font-weight:800;font-size:44px;line-height:1;margin-bottom:16px}
+.notif{display:grid;grid-template-columns:34px 1fr;gap:10px;background:rgba(255,255,255,.88);color:#111;border-radius:16px;padding:11px 12px;font-size:14px;line-height:1.3}
+.notif i{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--c-dark),var(--c-main));display:block}
+.notif .nh{display:flex;justify-content:space-between;font-size:12px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.mailmeta{font-size:13px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px;line-height:1.6}
+.mailmeta b{color:var(--ink)}
+.mail{background:#fff;color:#1f2937;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;font-size:15px;line-height:1.5;color-scheme:light}
+.mail .mh{background:var(--c-main);color:#fff;padding:16px 18px;display:flex;align-items:center;gap:10px;font-weight:700}
+.mail .mb{padding:18px}
+.mail h4{font-family:var(--display);font-size:22px;line-height:1.15;margin:0 0 10px;color:#111827}
+.mail table{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:14px}
+.mail td{padding:8px 0;border-bottom:1px solid #f1f1f1}
+.mail td:last-child{text-align:right;font-weight:700}
+.mail .mbtn{display:block;text-align:center;background:var(--c-main);color:#fff;border-radius:999px;padding:12px;font-weight:700;text-decoration:none;margin:4px 0 14px}
+.mail .mf{background:#f9fafb;color:#6b7280;font-size:12px;padding:12px 18px;text-align:center}
 .supporting{background:var(--chip);border-radius:14px;padding:10px 14px;font-weight:700;font-size:15px;margin:0 0 14px}
 
 @media (prefers-reduced-motion: reduce){
@@ -454,6 +481,11 @@ function viewPass(){
       <div class="stat"><b>${state.redemptions.length}</b><span class="small">Deals redeemed</span></div>
     </div>
     <p class="small" style="margin-top:14px">Your $${PRICE} went to ${esc(state.team)}. Pass good through Aug 31, 2027.</p>
+    <div class="walletbtns">
+      <button class="wbtn" data-action="wallet" data-w="apple"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="15" rx="3" fill="#fff"/><rect x="2" y="5" width="20" height="5" rx="2" fill="#34C759"/><rect x="2" y="8" width="20" height="4" fill="#FF9F0A"/><rect x="2" y="11" width="20" height="3" fill="#0A84FF"/></svg><span><small>Add to</small>Apple Wallet</span></button>
+      <button class="wbtn" data-action="wallet" data-w="google"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3" fill="#fff"/><path d="M2 9h20v3H2z" fill="#4285F4"/><path d="M2 12h20v3H2z" fill="#34A853"/><path d="M2 15h20v2H2z" fill="#FBBC04"/></svg><span><small>Add to</small>Google Wallet</span></button>
+    </div>
+    <button class="linkbtn" data-action="email" data-e="receipt">View your receipt email</button>
     ${householdCard()}
     <h3>Redemption history</h3>
     ${hist.length ? `<div class="list hist">${hist.map(r=>{const o=OFFERS.find(x=>x.id===r.offerId); const d=new Date(r.ts);
@@ -707,7 +739,7 @@ function sheetAdmBiz(id){
     <dl class="meta"><dt>Owner</dt><dd>${esc(o.owner||"Owner on file")}${o.contact?`<br><span class="small">${esc(o.contact)}</span>`:""}</dd>
       <dt>Address</dt><dd>${esc(o.addr)}</dd><dt>Contract</dt><dd>${c.level}<br><span class="small">📄 ${esc(c.file)} · ends ${fmtDay(new Date(c.ends+"T12:00"))}</span></dd>
       ${o.status==="invited"?`<dt>Deal</dt><dd>Form sent ${fmtDay(new Date(o.invited))}, not submitted yet</dd>`:`<dt>Deal</dt><dd>${esc(o.deal)} · ${LIMIT[o.limit]}</dd>`}</dl>
-    ${o.status==="invited"?`<button class="btn ghost" data-action="adm-resend" style="margin-bottom:10px">Resend deal form</button>`:""}
+    ${o.status==="invited"?`<button class="btn ghost" data-action="email" data-e="invite" data-id="${o.id}" style="margin-bottom:10px">Preview the email they got</button><button class="btn ghost" data-action="adm-resend" style="margin-bottom:10px">Resend deal form</button>`:""}
     <a class="btn" href="#biz" data-action="adm-open" data-id="${o.id}">Open their business view</a>
     <button class="linkbtn" data-action="close" style="display:block;margin:12px auto 0">Close</button>`);
 }
@@ -743,6 +775,59 @@ function sheetUndo(i){
   ui.undoReason = "Used by mistake";
 }
 function holderLog(h, text){ const entry = {ts:Date.now(), text}; if(h.self) state.selfLog.push(entry); else h.log.push(entry); }
+
+/* ---------- Wallet + email previews ---------- */
+const FROM = "Home Field Advantage <passes@homefieldadvantage.deals>";
+function sheetWallet(w){
+  const near = OFFERS[0];
+  const fmtT = new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}).replace(/ ?[AP]M/,"");
+  openSheet(`<h2 style="margin-top:0">${w==="apple"?"Apple":"Google"} Wallet</h2>
+    <p class="small">This is the card that gets added to their phone.</p>
+    <div class="wcard">
+      <div class="wtop"><span>Home Field Advantage</span><span>2026–27</span></div>
+      <div class="wnum">No. ${state.passNo}</div>
+      <div class="wf">
+        <div><span>Pass holder</span><b>${esc(state.name)}${state.member&&state.member.status==="active"?` + ${esc(state.member.name.split(" ")[0])}`:""}</b></div>
+        <div><span>Valid through</span><b>Aug 31, 2027</b></div>
+        <div style="grid-column:1/-1"><span>Supporting</span><b>${esc(state.team)} · ${ORG}</b></div>
+      </div>
+      <div class="wopen">Tap to open your pass and redeem</div>
+    </div>
+    <h3 style="margin-top:0">Reminders near participating businesses</h3>
+    <div class="lock"><div class="ltime">${fmtT}</div>
+      <div class="notif"><i aria-hidden="true"></i><div><div class="nh"><span>Advantage Pass</span><span>now</span></div><strong>You’re near ${near.biz}</strong><br>${near.deal} with your pass.</div></div>
+    </div>
+    <p class="small">The card updates by itself when deals change. Redeeming still happens in the app, where the live screen stops screenshots from working.</p>
+    <p class="test">Demo preview. In the live app this button adds the real card to ${w==="apple"?"Apple Wallet":"Google Wallet"}.</p>
+    <button class="btn" data-action="close">Done</button>`);
+}
+function sheetEmail(kind, id){
+  const shield = `<svg width="22" height="25" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" fill="#fff" fill-opacity=".25" stroke="#fff" stroke-width="1.5"/></svg>`;
+  let meta, body;
+  if(kind==="receipt"){
+    const first = esc(state.name.split(" ")[0]);
+    meta = `<b>From:</b> ${esc(FROM)}<br><b>To:</b> ${esc(state.email)}<br><b>Subject:</b> You’re Pass No. ${state.passNo}. Thanks for backing ${ORG}!`;
+    body = `<h4>Thanks, ${first}! You’re Pass No. ${state.passNo}.</h4>
+      <p>Your Advantage Pass is ready. Use it at ${OFFERS.length} local businesses through Aug 31, 2027.</p>
+      <table><tr><td>Advantage Pass 2026–27</td><td>$${PRICE}.00</td></tr><tr><td>Supporting</td><td>${esc(state.team)}</td></tr><tr><td>Program</td><td>${ORG}</td></tr><tr><td>Paid</td><td>Visa ending 4242</td></tr></table>
+      <a class="mbtn" href="#pass" data-action="close">Open my pass</a>
+      <p style="font-size:14px;color:#4b5563">This button signs you in on any phone. No password needed. Want your spouse or partner on the pass too? Add them from My pass.</p>`;
+  } else {
+    const o = ALLBIZ.find(x=>x.id===id);
+    meta = `<b>From:</b> ${esc(FROM)}<br><b>To:</b> ${esc(o.contact)}<br><b>Subject:</b> Set up your deal for the ${ORG} Advantage Pass`;
+    body = `<h4>Hi ${esc((o.owner||"there").split(" ")[0])}, welcome aboard!</h4>
+      <p>${ORG} added <strong>${esc(o.biz)}</strong> as a ${o.contract.level}. Thanks for backing the team!</p>
+      <p>Next step: tell pass holders what they get. It takes about two minutes, and the program approves it before it goes live.</p>
+      <a class="mbtn" href="#biz" data-action="adm-open" data-id="${o.id}">Set up my deal</a>
+      <p style="font-size:14px;color:#4b5563">This link signs you in to your business page, where you can see visits, pause your deal and request changes. No password needed.</p>`;
+  }
+  openSheet(`<h2 style="margin-top:0">Email preview</h2>
+    <div class="mailmeta">${meta}</div>
+    <div class="mail"><div class="mh">${shield}${ORG}</div><div class="mb">${body}</div>
+      <div class="mf">Home Field Advantage · homefieldadvantage.deals<br>You’re getting this because of your Advantage Pass.</div></div>
+    <p class="test" style="margin-top:14px">Demo preview. In the live app this is sent automatically.</p>
+    <button class="btn" data-action="close">Done</button>`);
+}
 
 /* ---------- Household member ---------- */
 const MAX_CHANGES = 1;
@@ -807,6 +892,7 @@ function sheetSuccess(){
     <div class="ok"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
     <h2 style="margin-top:0">Pass No. ${state.passNo} is yours</h2>
     <p>$${PRICE} goes to ${esc(state.team)}. We emailed your receipt and sign-in link to ${esc(state.email)}.</p>
+    <button class="linkbtn" data-action="email" data-e="receipt" style="display:block;margin:-4px auto 14px">See the email</button>
     <a class="btn" href="#offers" data-action="close">Browse offers</a></div>`);
 }
 
@@ -994,6 +1080,8 @@ document.addEventListener("click", e=>{
     document.getElementById("lead").innerHTML = `<strong>Thanks, ${esc(g("ld-name").split(" ")[0])}!</strong><p class="small" style="margin:6px 0 0">We’ll be in touch about ${esc(g("ld-school")||"your program")} soon. (Demo: this form doesn’t send yet.)</p>`;
     return;
   }
+  if(a==="wallet"){ sheetWallet(t.dataset.w); return; }
+  if(a==="email"){ sheetEmail(t.dataset.e, t.dataset.id); return; }
   if(a==="hh-add"){ sheetHousehold(); return; }
   if(a==="hh-send"){
     const n = document.getElementById("hn").value.trim(), c = document.getElementById("hc").value.trim();
