@@ -744,7 +744,7 @@ function parseICS(text, sp){
     let sum = e.summary, homeAway = "Home", opp = sum, mm;
     if((mm = /(?:^|\s)(?:@|at)\s+(.+)$/i.exec(sum))){ homeAway = "Away"; opp = mm[1]; }
     else if((mm = /(?:^|\s)vs\.?\s+(.+)$/i.exec(sum))){ homeAway = "Home"; opp = mm[1]; }
-    opp = opp.replace(me,"").replace(/\b(varsity|jv|junior varsity|freshman)\b/gi,"").replace(new RegExp(sp.name,"i"),"").replace(/^[\s\-–:|]+|[\s\-–:|]+$/g,"").replace(/\s{2,}/g," ") || sum;
+    opp = opp.replace(me,"").replace(/\b(varsity|jv|junior varsity|freshman)\b/gi,"").replace(new RegExp(sp.name,"i"),"").replace(/\(\s*\)|\[\s*\]/g,"").replace(/^[\s\-–:|]+|[\s\-–:|]+$/g,"").replace(/\s{2,}/g," ").trim() || sum;
     const res = /\b([WL])\s*(\d+\s*-\s*\d+)/.exec(e.desc||e.summary||"");
     const meet = /invitational|meet|tournament|championship/i.test(sum);
     events.push({id:"e"+Date.now()+"_"+n, date:dstr(d), time, opponent:clean(opp), homeAway: /neutral/i.test(e.desc||"") ? "Neutral" : homeAway,
