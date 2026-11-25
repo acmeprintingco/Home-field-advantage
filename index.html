@@ -872,7 +872,7 @@ function sheetHousehold(){
 function openSheet(html){
   document.getElementById("layer").innerHTML = `<div class="scrim" data-action="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
   const f = document.querySelector(".sheet button, .sheet input");
-  if(f) f.focus();
+  if(f) f.focus({preventScroll:true});
 }
 function closeSheet(){ document.getElementById("layer").innerHTML = ""; }
 
