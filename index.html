@@ -26,13 +26,13 @@
   :root:not([data-theme="light"]){
     color-scheme: dark;
     --bg:#140809; --surface:#22100F; --ink:#FBF1E6; --muted:#BFA9A2; --line:#3A1F1D;
-    --royal:var(--c-acc2); --royal-ink:#1A0A09; --gold:var(--c-acc2); --chip:#2E1716; --warn:#FFC86B;
+    --royal:var(--c-acc2); --royal-ink:var(--c-ink2,#1A0A09); --gold:var(--c-acc2); --chip:#2E1716; --warn:#FFC86B;
   }
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
   --bg:#140809; --surface:#22100F; --ink:#FBF1E6; --muted:#BFA9A2; --line:#3A1F1D;
-  --royal:var(--c-acc2); --royal-ink:#1A0A09; --gold:var(--c-acc2); --chip:#2E1716; --warn:#FFC86B;
+  --royal:var(--c-acc2); --royal-ink:var(--c-ink2,#1A0A09); --gold:var(--c-acc2); --chip:#2E1716; --warn:#FFC86B;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
@@ -356,7 +356,9 @@ const SCHOOLS = {
       {id:"wrestling",coach:"Josh Peck",name:"Wrestling",icon:"🤼",goal:60,fund:3,players:[[14,12],[31,9]]},
       {id:"track",coach:"Lisa Vrbas",name:"Track & Field",icon:"🏃",goal:80,fund:5,players:[[6,11],[19,8]]}
     ],
-    colors:{dark:"#3F0A0A",main:"#B91C1C",light:"#DC2626",acc:"#E5E7EB",acc2:"#F87171"}}
+    colors:{dark:"#0B0B0C",main:"#CC0022",light:"#E3263F",acc:"#3F3F46",acc2:"#E3263F",star:"#FFFFFF",ink2:"#FFFFFF"},
+    neutrals:{light:{bg:"#F4F4F5",surface:"#FFFFFF",ink:"#0B0B0C",muted:"#52525B",line:"#E4E4E7",chip:"#EBEBED"},
+              dark:{bg:"#0B0B0C",surface:"#18181B",ink:"#FAFAFA",muted:"#A1A1AA",line:"#2A2A2E",chip:"#232326"}}}
 };
 if(SCHOOL==="bison"){
   BASE_OFFERS = [
@@ -419,6 +421,13 @@ let GOAL = SPORT ? SPORT.goal : SPORTS.reduce((a,x)=>a+x.goal,0);
 
 if(SCHOOL){ const c = SCHOOLS[SCHOOL].colors, st = document.documentElement.style;
   st.setProperty("--c-dark",c.dark); st.setProperty("--c-main",c.main); st.setProperty("--c-light",c.light); st.setProperty("--c-acc",c.acc); st.setProperty("--c-acc2",c.acc2);
+  if(c.star) st.setProperty("--c-star",c.star);
+  if(c.ink2) st.setProperty("--c-ink2",c.ink2);
+  const nt = SCHOOLS[SCHOOL].neutrals;
+  if(nt){ const v = o=>`--bg:${o.bg};--surface:${o.surface};--ink:${o.ink};--muted:${o.muted};--line:${o.line};--chip:${o.chip};`;
+    const el = document.createElement("style");
+    el.textContent = `:root{${v(nt.light)}} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${v(nt.dark)}}} :root[data-theme="dark"]{${v(nt.dark)}}`;
+    document.head.appendChild(el); }
   document.title = `Home Field Advantage – ${SCHOOLS[SCHOOL].name} ${SCHOOLS[SCHOOL].mascot}${SPORT?" "+SPORT.name:""}`;
 }
 
@@ -475,7 +484,7 @@ function passCard(sample){
   </div>`;
 }
 
-const SHIELD = `<svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" style="fill:var(--c-main);stroke:var(--c-acc)" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" style="fill:var(--c-acc2)"/></svg>`;
+const SHIELD = `<svg width="30" height="34" viewBox="0 0 30 34" aria-hidden="true"><path d="M15 1 28 6v10c0 8-5.5 14-13 17C7.5 30 2 24 2 16V6z" style="fill:var(--c-main);stroke:var(--c-acc)" stroke-width="1.5"/><path d="M15 9l2.3 4.7 5.2.8-3.8 3.6.9 5.1L15 20.8l-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" style="fill:var(--c-star,var(--c-acc2))"/></svg>`;
 function BR(){ const b = state.brand||{}, sc = b.school||{}, sp = (SPORT && b[SPORT.id])||{}; return {logo:sp.logo||sc.logo, photo:sp.photo||sc.photo}; }
 function brandTarget(scope){ const id = scope || (SPORT ? SPORT.id : "school"); state.brand[id] = state.brand[id]||{}; return state.brand[id]; }
 function header(){ const L = SCHOOL && BR().logo; return `<div class="top">${L?`<img class="tlogo" src="${L}" alt="">`:SHIELD}${ORG}</div>`; }
