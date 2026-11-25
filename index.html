@@ -14,7 +14,7 @@
   color-scheme: light;
   --bg:#FAF7F2; --surface:#FFFFFF; --ink:#24100F; --muted:#6E5D59; --line:#EBE1D6;
   --c-dark:var(--c-dark); --c-main:var(--c-main); --c-light:var(--c-light); --c-acc:var(--c-acc); --c-acc2:var(--c-acc2);
-  --royal:var(--c-main); --royal-ink:#FFFFFF; --gold:var(--c-acc); --gold-ink:#FFFFFF;
+  --royal:var(--c-main); --royal-ink:var(--c-ink1,#FFFFFF); --gold:var(--c-acc); --gold-ink:#FFFFFF;
   --chip:#F3E9DC; --warn:#9A5B00;
   --display:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --body:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -346,7 +346,9 @@ const SCHOOLS = {
       {id:"girls-basketball",coach:"Jill Hansen",name:"Girls Basketball",icon:"🏀",goal:80,fund:7,players:[[4,9],[13,16],[21,12]]},
       {id:"track",coach:"Rob Kuhlman",name:"Track & Field",icon:"🏃",goal:60,fund:4,players:[[5,10],[8,7]]}
     ],
-    colors:{dark:"#391213",main:"#7A1E2C",light:"#A8323F",acc:"#C9A227",acc2:"#E0B53E"}},
+    colors:{dark:"#13214A",main:"#7A1E2C",light:"#2F3237",acc:"#C9A227",acc2:"#E0B53E",star:"#E0B53E",ink2:"#0A1228"},
+    neutrals:{light:{bg:"#F3F4F7",surface:"#FFFFFF",ink:"#111A33",muted:"#4B5368",line:"#E3E6EC",chip:"#E8EAF0"},
+              dark:{bg:"#0A1228",surface:"#121C36",ink:"#F3F5FA",muted:"#A3ACC2",line:"#243050",chip:"#1B2643"}}},
   bison:{name:"McCook", mascot:"Bison", short:"McCook Bison", town:"McCook", path:"/bison",
     sports:[
       {id:"football",coach:"Matt Ricketts",name:"Football",icon:"🏈",goal:200,fund:15,players:[[3,28],[21,19],[44,22]]},
@@ -419,6 +421,25 @@ ORG = SPORT ? `${SC.short} ${SPORT.name}` : SC.short;
 SCHOOL_FULL = SPORT ? `${SC.name} ${SC.mascot} ${SPORT.name}` : `${SC.name} ${SC.mascot} Athletics`;
 let GOAL = SPORT ? SPORT.goal : SPORTS.reduce((a,x)=>a+x.goal,0);
 
+/* ---------- Theme colors (school defaults, with school-wide and per-team overrides) ---------- */
+function hexRGB(h){ h = h.replace("#",""); if(h.length===3) h = h.split("").map(x=>x+x).join(""); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
+function rgbHex(a){ return "#"+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join(""); }
+function mixHex(a,b,t){ const x = hexRGB(a), y = hexRGB(b); return rgbHex(x.map((v,i)=>v+(y[i]-v)*t)); }
+function lum(h){ const c = hexRGB(h).map(v=>{ v/=255; return v<=.03928 ? v/12.92 : Math.pow((v+.055)/1.055,2.4); }); return .2126*c[0]+.7152*c[1]+.0722*c[2]; }
+function inkOn(h){ return lum(h) > .4 ? "#111111" : "#FFFFFF"; }
+function schoolTheme(id){ const c = SCHOOLS[id||SCHOOL].colors; return {primary:c.main, secondary:c.dark, neutral:c.light, accent:c.acc}; }
+function themeFor(scope){ const t = (typeof state!=="undefined" && state.theme) || {};
+  return Object.assign({}, schoolTheme(), t.school||{}, scope && scope!=="school" ? (t[scope]||{}) : {}); }
+function setThemeVars(th){
+  const st = document.documentElement.style, c = SCHOOLS[SCHOOL].colors, base = schoolTheme();
+  const same = th.primary===base.primary && th.secondary===base.secondary && th.neutral===base.neutral && th.accent===base.accent;
+  const acc2 = same ? c.acc2 : mixHex(th.accent,"#ffffff",.22);
+  st.setProperty("--c-dark",th.secondary); st.setProperty("--c-main",th.primary); st.setProperty("--c-light",th.neutral);
+  st.setProperty("--c-acc",th.accent); st.setProperty("--c-acc2",acc2);
+  st.setProperty("--c-star", same && c.star ? c.star : acc2);
+  st.setProperty("--c-ink1", inkOn(th.primary));
+  st.setProperty("--c-ink2", same && c.ink2 ? c.ink2 : inkOn(acc2));
+}
 if(SCHOOL){ const c = SCHOOLS[SCHOOL].colors, st = document.documentElement.style;
   st.setProperty("--c-dark",c.dark); st.setProperty("--c-main",c.main); st.setProperty("--c-light",c.light); st.setProperty("--c-acc",c.acc); st.setProperty("--c-acc2",c.acc2);
   if(c.star) st.setProperty("--c-star",c.star);
@@ -433,6 +454,7 @@ if(SCHOOL){ const c = SCHOOLS[SCHOOL].colors, st = document.documentElement.styl
 
 let state = load();
 rebuildTeams();
+if(SCHOOL) setThemeVars(themeFor(SPORT ? SPORT.id : "school"));
 let ui = {view:"pass", cat:"All", q:"", team:SPORT ? sportTeams(SPORT)[0] : TEAMS[0], biz:BASE_OFFERS[0].id, fromLink:false};
 (function(){
   const p = new URLSearchParams(location.search).get("player");
@@ -444,8 +466,8 @@ let clockTimer = null;
 rebuildOffers();
 
 function load(){
-  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{}});
-  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{}};
+  load.blank = ()=>({purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{}});
+  const blank = {purchased:false,name:"",email:"",team:"",passNo:"",redemptions:[],member:null,changesUsed:0,edits:{},added:JSON.parse(JSON.stringify(SEED_ADDED)),pending:JSON.parse(JSON.stringify(SEED_PENDING)),holders:JSON.parse(JSON.stringify(SEED_HOLDERS)),selfLog:[],brand:{},coaches:{},roster:null,schedule:null,ical:{},theme:{}};
   try{ const s = JSON.parse(localStorage.getItem(KEY)); return s ? Object.assign(blank,s) : blank; }catch(e){ return blank; }
 }
 function save(){ rebuildOffers(); try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -922,6 +944,30 @@ function playerLink(t){
   const base = location.origin + sportPath(sp ? sp.id : "");
   return m ? `${base}?player=${m[1]}` : base;
 }
+function themeCard(scope){
+  const sp = SPORTS.find(x=>x.id===scope);
+  const th = (ui.themeDraft && ui.themeDraft.scope===scope) ? ui.themeDraft.th : themeFor(scope);
+  const custom = ((state.theme||{})[scope]) ? true : false;
+  const row = (k,label,hint)=>`<label style="display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line);cursor:pointer">
+      <input type="color" class="tpick" data-k="${k}" data-scope="${scope}" value="${th[k]}" style="width:52px;height:40px;border:1px solid var(--line);border-radius:10px;background:none;padding:2px">
+      <span><strong style="display:block;font-size:15px">${label}</strong><span class="small">${hint} · ${th[k].toUpperCase()}</span></span></label>`;
+  const presets = scope==="school" ? [] : [{n:"School colors",th:themeFor("school")}];
+  return `<h3>${sp ? `${sp.name} colors` : `${SC.mascot} school colors`}</h3>
+    <div class="goal" style="margin-top:0">
+      <div class="wcard" style="margin:0 0 12px;padding:14px 16px">
+        <div class="wtop"><span>${sp ? `${SC.mascot} ${sp.name}` : `${SC.name} ${SC.mascot}`}</span><span>Preview</span></div>
+        <div class="wnum" style="font-size:40px;margin:12px 0 10px">No. 22</div>
+        <div style="display:flex;gap:8px;align-items:center"><span class="btn" style="width:auto;padding:8px 16px;font-size:14px;box-shadow:none">Button</span><span style="width:22px;height:22px;border-radius:50%;background:var(--c-acc2)"></span><span class="small" style="color:#fff;opacity:.85">Accent</span></div>
+      </div>
+      ${row("primary","Primary","Buttons, links, highlights")}
+      ${row("secondary","Secondary","Pass card and big screens")}
+      ${row("neutral","Neutral","Blends into the pass card")}
+      ${row("accent","Accent","Stars, borders, small details")}
+      <p class="small" style="margin:8px 0 12px">Changes preview live on this page. Button text switches between white and black automatically so it stays readable.</p>
+      <div class="row2"><button class="btn ghost" data-action="theme-reset" data-scope="${scope}" style="padding:12px 8px;font-size:15px">${scope==="school"?"Reset to defaults":"Use school colors"}</button><button class="btn" data-action="theme-save" data-scope="${scope}" style="padding:12px 8px;font-size:15px">Save colors</button></div>
+      ${custom?`<p class="small" style="margin:10px 0 0">${sp?`${sp.name} uses its own colors.`:"Custom school colors are on."}</p>`:""}
+    </div>`;
+}
 function brandingCard(scope){
   scope = scope || (SPORT ? SPORT.id : "school");
   const b = (state.brand||{})[scope]||{}; const sp = SPORTS.find(x=>x.id===scope);
@@ -1003,6 +1049,7 @@ function viewCoach(){
     <p class="kicker">Coach dashboard</p>
     <div class="supporting" style="margin-top:6px">Signed in as ${esc(coachOf(SPORT).name)} · ${SPORT.name}</div>
     ${brandingCard()}
+    ${themeCard(SPORT.id)}
     <h2 style="margin-top:0">Season fundraiser</h2>
     <div class="stats">
       <div class="stat"><b>$${raised.toLocaleString()}</b><span class="small">Raised</span></div>
@@ -1176,6 +1223,7 @@ function viewAdmin(){
       <span class="tag ${cls}">${tag}</span></button>`;}).join("")}</div>
     <p class="small" style="margin-top:12px">Admins add each business with its signed agreement. The business gets a link to set up its deal, and it goes live after approval.</p>
     ${brandingCard("school")}
+    ${themeCard("school")}
     ${partners()}
   </div>`;
 }
@@ -1442,10 +1490,17 @@ function route(){
   render();
 }
 function render(){
+  if(ui.themeDraft && !["coach","admin"].includes(ui.view)){ ui.themeDraft = null; setThemeVars(themeFor(SPORT ? SPORT.id : "school")); }
   const app = document.getElementById("app");
   const body = ui.view==="offers" ? viewOffers() : ui.view==="coach" ? viewCoach() : ui.view==="biz" ? viewBiz() : ui.view==="admin" ? viewAdmin() : (state.purchased ? viewPass() : viewBuy());
   app.innerHTML = roleBar() + body;
   document.querySelector(".tabs").hidden = ["coach","biz","admin"].includes(ui.view);
+  document.querySelectorAll("input.tpick").forEach(el=>el.addEventListener("input", e=>{
+    const scope = el.dataset.scope; const base = (ui.themeDraft && ui.themeDraft.scope===scope) ? ui.themeDraft.th : themeFor(scope);
+    ui.themeDraft = {scope, th:Object.assign({}, base, {[el.dataset.k]:e.target.value})};
+    setThemeVars(ui.themeDraft.th);
+    const hint = el.parentElement.querySelector(".small"); if(hint) hint.textContent = hint.textContent.replace(/#[0-9A-F]{6}$/i, e.target.value.toUpperCase());
+  }));
   const iu = document.getElementById("ics-up");
   if(iu) iu.addEventListener("change", e=>{ const f = e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = ()=>sheetImport(parseICS(String(fr.result), SPORT)); fr.readAsText(f); e.target.value=""; });
   const cu = document.getElementById("csv-up");
@@ -1570,6 +1625,15 @@ document.addEventListener("click", e=>{
     if(!g("ld-name") || !g("ld-contact")){ document.getElementById(!g("ld-name")?"ld-name":"ld-contact").focus(); return; }
     document.getElementById("lead").innerHTML = `<strong>Thanks, ${esc(g("ld-name").split(" ")[0])}!</strong><p class="small" style="margin:6px 0 0">We’ll be in touch about ${esc(g("ld-school")||"your program")} soon. (Demo: this form doesn’t send yet.)</p>`;
     return;
+  }
+  if(a==="theme-save"){
+    const scope = t.dataset.scope; state.theme = state.theme||{};
+    if(ui.themeDraft && ui.themeDraft.scope===scope) state.theme[scope] = ui.themeDraft.th;
+    ui.themeDraft = null; save(); setThemeVars(themeFor(SPORT ? SPORT.id : "school")); render(); toast("Colors saved."); return;
+  }
+  if(a==="theme-reset"){
+    const scope = t.dataset.scope; state.theme = state.theme||{}; delete state.theme[scope];
+    ui.themeDraft = null; save(); setThemeVars(themeFor(SPORT ? SPORT.id : "school")); render(); return;
   }
   if(a==="brand-rm"){ delete brandTarget(t.dataset.scope)[t.dataset.k]; save(); render(); return; }
   if(a==="sched"){ sheetSchedule(); return; }
