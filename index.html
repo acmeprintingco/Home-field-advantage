@@ -217,7 +217,10 @@ ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;
 .btile input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
 .mh img{width:26px;height:26px;object-fit:contain;background:#fff;border-radius:6px;padding:2px}
 /* Sponsors */
-.slot img{max-width:85%;max-height:80%;object-fit:contain}
+.slot img{max-width:85%;object-fit:contain;display:block}
+.slot.big img{max-height:60px}
+.slots .slot img{max-height:40px}
+.slot.big.filled{height:88px}
 .slot.filled{border-style:solid;border-color:var(--line)}
 .pass-by img{height:24px;max-width:120px;object-fit:contain;background:#fff;border-radius:6px;padding:2px 6px}
 .sptile{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
